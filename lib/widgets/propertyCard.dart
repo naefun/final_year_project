@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 
 class PropertyCard extends StatelessWidget {
@@ -5,6 +7,7 @@ class PropertyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    log("created propertycard");
     return Column(
       children: [
         Card(

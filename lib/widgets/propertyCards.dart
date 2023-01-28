@@ -2,15 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:test_flutter_app/widgets/propertyCard.dart';
 
 class PropertyCards extends StatelessWidget {
-  PropertyCards({ Key? key }) : super(key: key);
+  PropertyCards({
+    super.key,
+    this.numberOfCards = 0
+  });
 
-  List<PropertyCard> propertyCards = TemporaryHelper.getPropertyCards(2);
+  int numberOfCards;
 
   @override
   Widget build(BuildContext context){
     return Column(
-      children: propertyCards
+      children: getPropertyCards(numberOfCards)
     );
+  }
+
+  List<PropertyCard> getPropertyCards(int numberOfCards){
+    return TemporaryHelper.getPropertyCards(numberOfCards);
   }
 }
 
