@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 import 'package:test_flutter_app/pages/propertiesPage.dart';
 import 'package:test_flutter_app/widgets/propertyCards.dart';
 import 'package:test_flutter_app/widgets/simpleButton.dart';
@@ -16,9 +17,8 @@ class _HomePageState extends State<HomePage> {
 
   void navigateToPropertiesPage(){
     log("Navigating to properties page");
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const PropertiesPage()));
+
+    PersistentNavBarNavigator.pushNewScreen(context, screen: PropertiesPage());
   }
 
   @override
@@ -35,7 +35,7 @@ class _HomePageState extends State<HomePage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            SimpleButton(onPressedFunction: navigateToPropertiesPage)
+            SimpleButton(onPressedFunction: navigateToPropertiesPage, buttonLabel: "Properties",)
           ],
         )
       ],

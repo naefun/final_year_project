@@ -9,7 +9,9 @@ class PropertiesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     List<PropertyCard> propertyCards = TemporaryHelper.getPropertyCards(50);
 
-    return Column(
+    return Container(
+      color: Colors.white,
+      child: Column(
       children: [
         Expanded(
           child: ListView.builder(
@@ -17,6 +19,8 @@ class PropertiesPage extends StatelessWidget {
           itemBuilder: (context, index) => propertyCards.elementAt(index)
         ))
       ],
+    ),
     );
+    
   }
 }
