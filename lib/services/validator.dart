@@ -38,4 +38,11 @@ class Validator {
 
     return null;
   }
+
+    static String? validateUserType({String? userType}) {
+    if (userType == null) {
+      return 'Please select a user type';
+    }
+    return null;
+  }
 }

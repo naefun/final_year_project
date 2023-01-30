@@ -37,8 +37,13 @@ class _HomePageState extends State<HomePage> {
           children: [
             SimpleButton(onPressedFunction: navigateToPropertiesPage, buttonLabel: "Properties",)
           ],
-        )
+        ),
       ],
     );
+  }
+
+
+  void getUserData(){
+    
   }
 }

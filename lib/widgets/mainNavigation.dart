@@ -59,7 +59,7 @@ class _MainNavigationState extends State<MainNavigation> {
         return [
           const HomePage(),
           const CreatePropertyPage(),
-          const SettingsPage()
+          SettingsPage()
         ];
     }
     

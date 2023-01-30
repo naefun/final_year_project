@@ -1,7 +1,11 @@
+import 'dart:developer';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
+import 'package:test_flutter_app/models/user.dart' as AppUser;
 import 'package:test_flutter_app/pages/propertiesPage.dart';
+import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/services/fireAuth.dart';
 import 'package:test_flutter_app/services/validator.dart';
 import 'package:test_flutter_app/widgets/mainNavigation.dart';
@@ -14,21 +18,25 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final _registerFormKey = GlobalKey<FormState>();
 
-  final _nameTextController = TextEditingController();
+  final _firstNameTextController = TextEditingController();
+  final _lastNameTextController = TextEditingController();
   final _emailTextController = TextEditingController();
   final _passwordTextController = TextEditingController();
 
-  final _focusName = FocusNode();
+  final _focusFirstName = FocusNode();
+  final _focusLastName = FocusNode();
   final _focusEmail = FocusNode();
   final _focusPassword = FocusNode();
 
   bool _isProcessing = false;
+  String? dropdownValue;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        _focusName.unfocus();
+        _focusFirstName.unfocus();
+        _focusLastName.unfocus();
         _focusEmail.unfocus();
         _focusPassword.unfocus();
       },
@@ -47,13 +55,30 @@ class _RegisterPageState extends State<RegisterPage> {
                   child: Column(
                     children: <Widget>[
                       TextFormField(
-                        controller: _nameTextController,
-                        focusNode: _focusName,
+                        controller: _firstNameTextController,
+                        focusNode: _focusFirstName,
                         validator: (value) => Validator.validateName(
                           name: value,
                         ),
                         decoration: InputDecoration(
-                          hintText: "Name",
+                          hintText: "First Name",
+                          errorBorder: UnderlineInputBorder(
+                            borderRadius: BorderRadius.circular(6.0),
+                            borderSide: BorderSide(
+                              color: Colors.red,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16.0),
+                      TextFormField(
+                        controller: _lastNameTextController,
+                        focusNode: _focusLastName,
+                        validator: (value) => Validator.validateName(
+                          name: value,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: "Last Name",
                           errorBorder: UnderlineInputBorder(
                             borderRadius: BorderRadius.circular(6.0),
                             borderSide: BorderSide(
@@ -97,21 +122,41 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                         ),
                       ),
+                      SizedBox(height: 16.0),
+                      DropdownButtonFormField<String>(
+                        validator: (value) => Validator.validateUserType(userType: value),
+                        hint: Text("Account type"),
+                        value: dropdownValue,
+                        onChanged: (value) => {
+                          setState(() => dropdownValue = value!),
+                          log(value!)
+                        },
+                        items: AppUser.User.getUserTypes()
+                            .map<DropdownMenuItem<String>>(
+                                (List<String> value) {
+                          return DropdownMenuItem<String>(
+                            value: value[1],
+                            child: Text(value[0]),
+                          );
+                        }).toList(),
+                      ),
                       SizedBox(height: 32.0),
                       Row(
                         children: [
                           Expanded(
                             child: ElevatedButton(
                               onPressed: () async {
-
                                 if (_registerFormKey.currentState!.validate()) {
-                                                                  setState(() {
-                                  _isProcessing = true;
-                                });
-                                  
+                                  if (dropdownValue == null) {
+                                    return;
+                                  }
+                                  setState(() {
+                                    _isProcessing = true;
+                                  });
+
                                   User? user =
                                       await FireAuth.registerUsingEmailPassword(
-                                    name: _nameTextController.text,
+                                    name: _firstNameTextController.text,
                                     email: _emailTextController.text,
                                     password: _passwordTextController.text,
                                   );
@@ -120,8 +165,18 @@ class _RegisterPageState extends State<RegisterPage> {
                                     _isProcessing = false;
                                   });
 
-                                  if (user != null) {
-                                    Navigator.of(context).pushAndRemoveUntil(
+                                  AppUser.User userDocument = AppUser.User(
+                                      authId: user?.uid,
+                                      firstName: _firstNameTextController.text,
+                                      lastName: _lastNameTextController.text,
+                                      userType: int.tryParse(dropdownValue!));
+
+                                  if (user != null &&
+                                      AppUser.User.fieldsArentEmpty(
+                                          userDocument)) {
+                                    DbService.createUserDocument(userDocument);
+                                    Navigator.of(this.context)
+                                        .pushAndRemoveUntil(
                                       MaterialPageRoute(
                                         builder: (context) => MainNavigation(),
                                       ),

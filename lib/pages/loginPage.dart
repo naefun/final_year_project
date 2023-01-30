@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +9,7 @@ import 'package:test_flutter_app/pages/registerPage.dart';
 import 'package:test_flutter_app/services/fireAuth.dart';
 import 'package:test_flutter_app/services/validator.dart';
 import 'package:test_flutter_app/widgets/mainNavigation.dart';
+import 'package:test_flutter_app/widgets/simpleButton.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -30,6 +33,7 @@ class _LoginPageState extends State<LoginPage> {
     User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
+      log(user.uid);
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) => MainNavigation(),
@@ -128,7 +132,8 @@ class _LoginPageState extends State<LoginPage> {
                                                 .signInUsingEmailPassword(
                                               email: _emailTextController.text,
                                               password:
-                                                  _passwordTextController.text, context: context,
+                                                  _passwordTextController.text,
+                                              context: context,
                                             );
 
                                             setState(() {
