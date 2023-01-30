@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:test_flutter_app/models/property.dart';
 import 'package:test_flutter_app/models/user.dart';
 
 class DbService {
@@ -29,5 +30,16 @@ class DbService {
     CollectionReference<User> ref = User.getDocumentReference();
     await ref.doc().set(user);
     log("user document created");
+  }
+  
+static Future<void> createPropertyDocument(Property property) async {
+    if (!Property.fieldsArentEmpty(property)) {
+      log("fields are empty");
+      return;
+    }
+
+    CollectionReference<Property> ref = Property.getDocumentReference();
+    await ref.doc().set(property);
+    log("property document created");
   }
 }
