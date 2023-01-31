@@ -31,8 +31,8 @@ class DbService {
     await ref.doc().set(user);
     log("user document created");
   }
-  
-static Future<void> createPropertyDocument(Property property) async {
+
+  static Future<void> createPropertyDocument(Property property) async {
     if (!Property.fieldsArentEmpty(property)) {
       log("fields are empty");
       return;

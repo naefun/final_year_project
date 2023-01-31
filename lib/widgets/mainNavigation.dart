@@ -73,7 +73,7 @@ class _MainNavigationState extends State<MainNavigation> {
           ),
           PersistentBottomNavBarItem(
               icon: const Icon(CupertinoIcons.add),
-              title: ("Settings"),
+              title: ("Create"),
               activeColorPrimary: CupertinoColors.activeBlue,
               activeColorSecondary: CupertinoColors.white,
               inactiveColorPrimary: CupertinoColors.systemGrey,

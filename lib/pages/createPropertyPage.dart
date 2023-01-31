@@ -1,8 +1,12 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:test_flutter_app/models/property.dart';
+import 'package:test_flutter_app/services/cloudStorageService.dart';
 import 'package:test_flutter_app/services/dbService.dart';
+import 'package:test_flutter_app/widgets/fileSelector.dart';
+import 'package:uuid/uuid.dart';
 
 class CreatePropertyPage extends StatefulWidget {
   const CreatePropertyPage({ Key? key }) : super(key: key);
@@ -14,6 +18,13 @@ class CreatePropertyPage extends StatefulWidget {
 class _CreatePropertyPageState extends State<CreatePropertyPage> {
   final _registerFormKey = GlobalKey<FormState>();
   bool _isProcessing = false;
+  File? selectedImage;
+
+  void updateSelectedImage(File image){
+    setState(() {
+      selectedImage = image;
+    });
+  }
 
   final _addressHouseNameOrNumberTextController = TextEditingController();
   final _addressRoadNameTextController = TextEditingController();
@@ -33,6 +44,7 @@ class _CreatePropertyPageState extends State<CreatePropertyPage> {
 
   @override
   Widget build(BuildContext context) {
+
     return GestureDetector(
       onTap: () {
         _focusAddressHouseNameOrNumber.unfocus();
@@ -52,6 +64,12 @@ class _CreatePropertyPageState extends State<CreatePropertyPage> {
                   key: _registerFormKey,
                   child: Column(
                     children: <Widget>[
+                      Container(
+                        child: selectedImage != null ? Image.file(selectedImage!) : Text("No image selected")
+                      ),
+                      FileSelector(onImageSelected: (File image) {
+                        updateSelectedImage(image);
+                      }),
                       TextFormField(
                         controller: _addressHouseNameOrNumberTextController,
                         focusNode: _focusAddressHouseNameOrNumber,
@@ -163,11 +181,14 @@ class _CreatePropertyPageState extends State<CreatePropertyPage> {
                             child: ElevatedButton(
                               onPressed: () async {
                                 if (_registerFormKey.currentState!.validate()) {
+                                  String _propertyImageName = selectedImage != null ? Uuid().v4() : "null";
+
                                   Property propertyDocument = Property(
                                     addressHouseNameOrNumber: _addressHouseNameOrNumberTextController.text,
                                     addressRoadName: _addressRoadNameTextController.text,
                                     addressPostcode: _addressPostcodeTextController.text,
                                     addressCity: _addressCityTextController.text,
+                                    propertyImageName: _propertyImageName,
                                     nextInventoryCheck: _nextInventoryCheckTextController.text,
                                     ownerId: _ownerIdTextController.text,
                                     tenantId: _tenantIdTextController.text);
@@ -181,6 +202,9 @@ class _CreatePropertyPageState extends State<CreatePropertyPage> {
                                   log("This is where the property will be sent to the database");
                                   if(Property.fieldsArentEmpty(propertyDocument)){
                                     DbService.createPropertyDocument(propertyDocument);
+                                    if(selectedImage != null){
+                                      CloudStorageService.putPropertyImage(selectedImage!, _propertyImageName);
+                                    }
                                   }
 
                                   setState(() {

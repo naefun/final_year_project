@@ -6,6 +6,7 @@ class Property {
   final String? addressRoadName;
   final String? addressPostcode;
   final String? addressCity;
+  final String? propertyImageName;
   final String? nextInventoryCheck;
   final String? ownerId;
   final String? tenantId;
@@ -15,6 +16,7 @@ class Property {
       this.addressRoadName,
       this.addressPostcode,
       this.addressCity,
+      this.propertyImageName,
       this.nextInventoryCheck,
       this.ownerId,
       this.tenantId});
@@ -29,6 +31,7 @@ class Property {
       addressRoadName: data?['addressRoadName'],
       addressPostcode: data?['addressPostcode'],
       addressCity: data?['addressCity'],
+      propertyImageName: data?['propertyImageName'],
       nextInventoryCheck: data?['nextInventoryCheck'],
       ownerId: data?['ownerId'],
       tenantId: data?['tenantId'],
@@ -41,6 +44,7 @@ class Property {
       if (addressRoadName != null) "addressRoadName": addressRoadName,
       if (addressPostcode != null) "addressPostcode": addressPostcode,
       if (addressCity != null) "addressCity": addressCity,
+      if (propertyImageName != null) "propertyImageName": propertyImageName,
       if (nextInventoryCheck != null) "nextInventoryCheck": nextInventoryCheck,
       if (ownerId != null) "ownerId": ownerId,
       if (tenantId != null) "tenantId": tenantId,
