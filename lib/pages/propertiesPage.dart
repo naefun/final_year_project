@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/widgets/propertyCard.dart';
 import 'package:test_flutter_app/widgets/propertyCards.dart';
 

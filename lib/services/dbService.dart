@@ -42,4 +42,15 @@ class DbService {
     await ref.doc().set(property);
     log("property document created");
   }
+
+  static Future<List<QueryDocumentSnapshot<Property>>?> getOwnedProperties(String ownerId) async {
+    log("getting owned properties");
+    QuerySnapshot<Property>? data;
+    CollectionReference<Property> ref = Property.getDocumentReference();
+    await ref.where("ownerId", isEqualTo: ownerId).get().then(
+          (res) => {log("Successfully completed for owner: $ownerId ${res.size}"), data = res},
+          onError: (e) => log("Error completing: $e"),
+        );
+    return data?.docs;
+  }
 }
