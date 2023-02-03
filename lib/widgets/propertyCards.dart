@@ -10,7 +10,8 @@ import 'package:test_flutter_app/widgets/propertyCard.dart';
 
 class PropertyCards extends StatefulWidget {
   int numberOfCards;
-  PropertyCards({super.key, this.numberOfCards = 0});
+  List<Property>? propertiesArg;
+  PropertyCards({super.key, this.numberOfCards = 0, this.propertiesArg});
 
   @override
   _PropertyCardsState createState() => _PropertyCardsState();
@@ -21,27 +22,14 @@ class _PropertyCardsState extends State<PropertyCards> {
 
   @override
   Widget build(BuildContext context) {
-    if(properties.isEmpty){
+    if(widget.propertiesArg!=null){
+      properties=widget.propertiesArg!;
+    } else if(properties.isEmpty){
       getPropertyData(FireAuth.getCurrentUser()!.uid);
     }
     log("Properties retrieved: ${properties.length.toString()}");
 
-    return Column(children: getPropertyCards(widget.numberOfCards));
-  }
-
-  List<PropertyCard> getPropertyCards(int numberOfCards) {
-    List<PropertyCard> propertyCards = [];
-    for (var i = 0; i < numberOfCards; i++) {
-      if(properties.isEmpty){
-        log("properties is not empty");
-        propertyCards.add(PropertyCard());
-      }else{
-        if(i >= properties.length){break;}
-        propertyCards.add(PropertyCard(propertyData: properties[i],));
-      }
-    }
-
-    return propertyCards;
+    return Column(children: properties.isNotEmpty ? PropertyCardHelper.getPropertyCards(widget.numberOfCards == 0 ? properties.length : widget.numberOfCards, properties)!:[Text("data")]);
   }
 
   void getPropertyData(String userId) async {
@@ -56,11 +44,29 @@ class _PropertyCardsState extends State<PropertyCards> {
   }
 }
 
-class TemporaryHelper {
-  static List<PropertyCard> getPropertyCards(int numberOfCards) {
+class PropertyCardHelper {
+  // static List<PropertyCard> getPropertyCards(int numberOfCards) {
+  //   List<PropertyCard> propertyCards = [];
+  //   for (var i = 0; i < numberOfCards; i++) {
+  //     propertyCards.add(PropertyCard());
+  //   }
+
+  //   return propertyCards;
+  // }
+
+    static List<PropertyCard>? getPropertyCards(int numberOfCards, List<Property> propertyData) {
+    if(propertyData.isEmpty){
+      return null;
+    }
     List<PropertyCard> propertyCards = [];
     for (var i = 0; i < numberOfCards; i++) {
-      propertyCards.add(PropertyCard());
+      if(propertyData.isEmpty){
+        log("properties is empty");
+        propertyCards.add(PropertyCard());
+      }else{
+        if(i >= propertyData.length){break;}
+        propertyCards.add(PropertyCard(propertyData: propertyData[i],));
+      }
     }
 
     return propertyCards;

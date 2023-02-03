@@ -23,22 +23,26 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      children: [
-        const Text(
-          "Properties",
-          style: TextStyle(fontSize: 20),
-        ),
-        PropertyCards(
-          numberOfCards: 2,
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            SimpleButton(onPressedFunction: navigateToPropertiesPage, buttonLabel: "Properties",)
-          ],
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: ListView(
+        children: [
+          const Text(
+            "Properties",
+            style: TextStyle(fontSize: 20),
+          ),
+          SizedBox(height: 15.0),
+          PropertyCards(
+            numberOfCards: 2,
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              SimpleButton(onPressedFunction: navigateToPropertiesPage, buttonLabel: "Properties",)
+            ],
+          ),
+        ],
+      ),
     );
   }
 
