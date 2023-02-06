@@ -8,6 +8,7 @@ import 'package:test_flutter_app/models/user.dart' as AppUser;
 import 'package:test_flutter_app/pages/loginPage.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/services/fireAuth.dart';
+import 'package:test_flutter_app/widgets/customAppBar.dart';
 import 'package:test_flutter_app/widgets/simpleButton.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -34,23 +35,29 @@ class _SettingsPageState extends State<SettingsPage> {
       getUser.call();
     }
 
-    return Container(
-      child: ListView(
-        children: [
-          Text(
-              "Hello ${myUser != null && myUser!.firstName != null ? myUser!.firstName! : "User"}"),
-          SimpleButton(
-              onPressedFunction: () async => {
-                    await FireAuth.signOut(),
-                    PersistentNavBarNavigator.pushNewScreen(context,
-                        screen: LoginPage(), withNavBar: false)
-                  },
-              buttonLabel: "sign out"),
-          SimpleButton(
-              onPressedFunction: () =>
-                  {log(FireAuth.getCurrentUser().toString())},
-              buttonLabel: "${myUser?.firstName}"),
-        ],
+    return Scaffold(
+      appBar: CustomAppBar(),
+      body: Container(
+        padding: EdgeInsets.all(20),
+        child: ListView(
+          children: [
+            Text(
+                "Hello ${myUser != null && myUser!.firstName != null ? myUser!.firstName! : "User"}"),
+            SizedBox(height: 10,),
+            Text("Account type: ${myUser!=null?AppUser.User.userTypes[myUser!.userType!-1][0]:""}"),
+            SimpleButton(
+                onPressedFunction: () async => {
+                      await FireAuth.signOut(),
+                      PersistentNavBarNavigator.pushNewScreen(context,
+                          screen: LoginPage(), withNavBar: false)
+                    },
+                buttonLabel: "sign out"),
+            SimpleButton(
+                onPressedFunction: () =>
+                    {log(FireAuth.getCurrentUser().toString())},
+                buttonLabel: "${myUser?.firstName}"),
+          ],
+        ),
       ),
     );
   }

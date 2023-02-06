@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:test_flutter_app/models/property.dart';
 import 'package:test_flutter_app/services/cloudStorageService.dart';
 import 'package:test_flutter_app/services/dbService.dart';
+import 'package:test_flutter_app/widgets/customAppBar.dart';
 import 'package:test_flutter_app/widgets/fileSelector.dart';
 import 'package:uuid/uuid.dart';
 
@@ -50,12 +51,10 @@ class _CreatePropertyPageState extends State<CreatePropertyPage> {
         _focusAddressHouseNameOrNumber.unfocus();
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text('Create property'),
-        ),
+        appBar: CustomAppBar(title: "Create property"),
         body: 
         Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(20.0),
           child: Center(
             child: ListView(
               // mainAxisAlignment: MainAxisAlignment.center,

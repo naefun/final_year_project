@@ -12,7 +12,7 @@ class CloudStorageService {
     Uint8List? imageData;
     log("getting image");
     Reference propertyImageRef =
-        storageRef!.child("property_images/$imageName");
+        storageRef.child("property_images/$imageName");
     log(propertyImageRef.fullPath);
     await propertyImageRef.getData(1000000).then((value) => imageData = value!);
     return imageData;
@@ -22,7 +22,7 @@ class CloudStorageService {
     Reference storageRef = storage.ref();
     log("uploading image");
     Reference propertyImagesRef =
-        storageRef!.child("property_images/$imageName");
+        storageRef.child("property_images/$imageName");
     await propertyImagesRef.putFile(image);
   }
 }
