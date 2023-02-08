@@ -3,6 +3,8 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:test_flutter_app/utilities/global_values.dart';
 import 'package:test_flutter_app/widgets/customAppBar.dart';
+import 'package:test_flutter_app/widgets/requestInventoryCheckDialog.dart';
+import 'package:test_flutter_app/widgets/simpleButton.dart';
 import 'package:test_flutter_app/widgets/wideInventoryCheckCard.dart';
 
 enum SampleItem { itemOne, itemTwo, itemThree }
@@ -109,9 +111,25 @@ class _PropertyPageState extends State<PropertyPage> {
                 ],
               ),
               const SizedBox(height: 50.0),
-              const Text(
-                "Inventory checks",
-                style: TextStyle(fontSize: 16),
+              Flex(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                direction: Axis.horizontal,
+                children: [
+                  const Text(
+                    "Inventory checks",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  ElevatedButton.icon(
+                      onPressed: () => showDialog<String>(
+                          context: context,
+                          builder: (BuildContext context) =>
+                              RequestInventoryCheckDialog()),
+                      icon: Icon(Icons.add),
+                      label: Text("Request"),
+                      style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap))
+                ],
               ),
               const SizedBox(height: 15.0),
               Container(

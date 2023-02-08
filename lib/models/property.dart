@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 
-class Property {
+class Property implements Comparable{
   final String? addressHouseNameOrNumber;
   final String? addressRoadName;
   final String? addressPostcode;
@@ -69,5 +69,27 @@ class Property {
         property.addressPostcode != null &&
         property.addressCity != null &&
         property.ownerId != null;
+  }
+  
+  @override
+  int compareTo(other) {
+    // TODO: implement compareTo
+    Property? p = other;
+    if(p == null){
+      return 1;
+    }
+
+    if(addressHouseNameOrNumber!=p.addressHouseNameOrNumber!){
+      return addressHouseNameOrNumber!.compareTo(p.addressHouseNameOrNumber!);
+    }else if(addressRoadName!=p.addressRoadName){
+      return addressRoadName!.compareTo(p.addressRoadName!);
+    }else if(addressCity!=p.addressCity){
+      return addressCity!.compareTo(p.addressCity!);
+    }else if(addressPostcode!=p.addressPostcode){
+      return addressPostcode!.compareTo(p.addressPostcode!);
+    }else{
+      return 0;
+    }
+
   }
 }

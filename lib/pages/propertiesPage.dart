@@ -58,6 +58,7 @@ class _PropertiesPageState extends State<PropertiesPage> {
                 }
             });
     setState(() {
+      propertiesToReturn.sort();
       properties = propertiesToReturn;
     });
   }

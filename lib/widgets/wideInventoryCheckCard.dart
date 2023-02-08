@@ -22,8 +22,8 @@ class _WideInventoryCheckCardState extends State<WideInventoryCheckCard> {
           elevation: 5,
           child: Container(
             decoration: BoxDecoration(
-                border:
-                    Border(left: BorderSide(color: Color(0xFF579A56), width: 7))),
+                border: Border(
+                    left: BorderSide(color: Color(0xFF579A56), width: 7))),
             padding: EdgeInsets.fromLTRB(8, 15, 8, 15),
             child: Row(
               children: [
@@ -39,11 +39,18 @@ class _WideInventoryCheckCardState extends State<WideInventoryCheckCard> {
                           height: 28,
                           width: 28,
                         ),
-                        Text("0", style: TextStyle(fontSize: 18)),
-                        Text(
-                          " comments",
-                          style: TextStyle(fontSize: 12),
-                        )
+                        SizedBox(
+                          width: 5,
+                        ),
+                        Column(
+                          children: [
+                            Text("0", style: TextStyle(fontSize: 18)),
+                            Text(
+                              " comments",
+                              style: TextStyle(fontSize: 12),
+                            )
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -60,11 +67,18 @@ class _WideInventoryCheckCardState extends State<WideInventoryCheckCard> {
                           height: 28,
                           width: 28,
                         ),
-                        Text("5", style: TextStyle(fontSize: 18)),
-                        Text(
-                          " days ago",
-                          style: TextStyle(fontSize: 12),
-                        )
+                        SizedBox(
+                          width: 5,
+                        ),
+                        Column(
+                          children: [
+                            Text("5", style: TextStyle(fontSize: 18)),
+                            Text(
+                              " days ago",
+                              style: TextStyle(fontSize: 12),
+                            )
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -81,11 +95,15 @@ class _WideInventoryCheckCardState extends State<WideInventoryCheckCard> {
                           height: 28,
                           width: 28,
                         ),
-                        Text("5", style: TextStyle(fontSize: 18)),
-                        Text(
-                          " days ago",
+                        SizedBox(
+                          width: 5,
+                        ),
+                        Expanded(
+                            child: Text(
+                          "James Connor",
                           style: TextStyle(fontSize: 12),
-                        )
+                          overflow: TextOverflow.visible,
+                        ))
                       ],
                     ),
                   ),

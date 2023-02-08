@@ -17,6 +17,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  bool reloadData = false;
+  PropertyCards pCards = PropertyCards(numberOfCards: 2,);
+
   void navigateToPropertiesPage() {
     log("Navigating to properties page");
 
@@ -55,62 +58,74 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: CustomAppBar(),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Your properties",
-                style: TextStyle(fontSize: 20),
-              ),
-              const SizedBox(height: 15.0),
-              PropertyCards(
-                numberOfCards: 2,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  SimpleButton(
-                    onPressedFunction: navigateToPropertiesPage,
-                    buttonLabel: "View more",
-                  )
-                ],
-              ),
-              const SizedBox(height: 15.0),
-              const Text(
-                "Recent inventory checks",
-                style: TextStyle(fontSize: 17),
-              ),
-              const SizedBox(height: 15.0),
-              SizedBox(
-                height: 180,
-                child: ListView.builder(
-                  physics: const ClampingScrollPhysics(),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: temporaryCards.length,
-                  itemBuilder: (BuildContext context, int index) =>
-                      temporaryCards[index],
+      body: RefreshIndicator(
+        onRefresh: () async {
+          // Replace this delay with the code to be executed during refresh
+          // and return a Future when code finishs execution.
+          return refreshData();
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: SingleChildScrollView(
+            physics: AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Your properties",
+                  style: TextStyle(fontSize: 20),
                 ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  SimpleButton(
-                    onPressedFunction: () {
-                      log("view more inventory checks");
-                    },
-                    buttonLabel: "View more",
-                  )
-                ],
-              ),
-            ],
+                const SizedBox(height: 15.0),
+                pCards,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    SimpleButton(
+                      onPressedFunction: navigateToPropertiesPage,
+                      buttonLabel: "View more",
+                    )
+                  ],
+                ),
+                const SizedBox(height: 15.0),
+                const Text(
+                  "Recent inventory checks",
+                  style: TextStyle(fontSize: 17),
+                ),
+                const SizedBox(height: 15.0),
+                SizedBox(
+                  height: 180,
+                  child: ListView.builder(
+                    physics: const ClampingScrollPhysics(),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: temporaryCards.length,
+                    itemBuilder: (BuildContext context, int index) =>
+                        temporaryCards[index],
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    SimpleButton(
+                      onPressedFunction: () {
+                        log("view more inventory checks");
+                      },
+                      buttonLabel: "View more",
+                    )
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  void getUserData() {}
+  Future<void> refreshData() async {
+    setState(() {
+      pCards = PropertyCards(numberOfCards: 2,);
+    });
+  }
+
+
 }

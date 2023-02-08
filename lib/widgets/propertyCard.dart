@@ -27,10 +27,7 @@ class _PropertyCardState extends State<PropertyCard> {
     log(propertyData != null
         ? "Property postcode: ${propertyData!.addressPostcode!}"
         : "created propertycard");
-    log(imageData != null ? "image data retrieved"! : "");
-    if (propertyData != null && propertyData!.propertyImageName != null) {
-      CloudStorageService.getPropertyImage(propertyData!.propertyImageName!);
-    }
+    log(imageData != null ? "image data retrieved" : "");
     if (propertyData != null &&
         propertyData!.propertyImageName != null &&
         imageData == null) {
@@ -126,10 +123,17 @@ class _PropertyCardState extends State<PropertyCard> {
 
   void setPropertyImageUrl(String imageName) async {
     Uint8List? url;
-    url = await CloudStorageService.getPropertyImage(imageName);
-    setState(() {
-      imageData = url;
-    });
+
+    try{
+      url = await CloudStorageService.getPropertyImage(imageName);
+    }catch(e){
+
+    }
+    if(url != null){
+      setState(() {
+        imageData = url;
+      });
+    }
   }
 
   void navigateToPropertyPage() {

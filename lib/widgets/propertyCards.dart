@@ -39,6 +39,7 @@ class _PropertyCardsState extends State<PropertyCards> {
               propertiesToReturn.add(element.data());
             }));
     setState(() {
+      propertiesToReturn.sort();
       properties = propertiesToReturn;
     });
   }

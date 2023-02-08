@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
@@ -14,7 +15,7 @@ class CloudStorageService {
     Reference propertyImageRef =
         storageRef.child("property_images/$imageName");
     log(propertyImageRef.fullPath);
-    await propertyImageRef.getData(1000000).then((value) => imageData = value!);
+    await propertyImageRef.getData(1000000).then((value) => imageData = value!, onError: (error) {return Future<Uint8List?>;});
     return imageData;
   }
 

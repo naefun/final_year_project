@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:test_flutter_app/models/property.dart';
 import 'package:test_flutter_app/services/cloudStorageService.dart';
 import 'package:test_flutter_app/services/dbService.dart';
+import 'package:test_flutter_app/services/fireAuth.dart';
 import 'package:test_flutter_app/widgets/customAppBar.dart';
 import 'package:test_flutter_app/widgets/fileSelector.dart';
 import 'package:uuid/uuid.dart';
@@ -144,25 +145,25 @@ class _CreatePropertyPageState extends State<CreatePropertyPage> {
                         ),
                       ),
                       SizedBox(height: 16.0),
-                      TextFormField(
-                        controller: _ownerIdTextController,
-                        focusNode: _focusOwnerId,
-                        validator: (value) => ((value==null || value.isEmpty)? "Owner ID cannot be empty" : null),
-                        decoration: InputDecoration(
-                          hintText: "Owner ID",
-                          errorBorder: UnderlineInputBorder(
-                            borderRadius: BorderRadius.circular(6.0),
-                            borderSide: BorderSide(
-                              color: Colors.red,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 16.0),
+                      // TextFormField(
+                      //   controller: _ownerIdTextController,
+                      //   focusNode: _focusOwnerId,
+                      //   validator: (value) => ((value==null || value.isEmpty)? "Owner ID cannot be empty" : null),
+                      //   decoration: InputDecoration(
+                      //     hintText: "Owner ID",
+                      //     errorBorder: UnderlineInputBorder(
+                      //       borderRadius: BorderRadius.circular(6.0),
+                      //       borderSide: BorderSide(
+                      //         color: Colors.red,
+                      //       ),
+                      //     ),
+                      //   ),
+                      // ),
+                      // SizedBox(height: 16.0),
                       TextFormField(
                         controller: _tenantIdTextController,
                         focusNode: _focusTenantId,
-                        validator: (value) => ((value==null || value.isEmpty)? "Enter a value" : null),
+                        // validator: (value) => ((value==null || value.isEmpty)? "Enter a value" : null),
                         decoration: InputDecoration(
                           hintText: "Tenant ID",
                           errorBorder: UnderlineInputBorder(
@@ -189,7 +190,7 @@ class _CreatePropertyPageState extends State<CreatePropertyPage> {
                                     addressCity: _addressCityTextController.text,
                                     propertyImageName: _propertyImageName,
                                     nextInventoryCheck: _nextInventoryCheckTextController.text,
-                                    ownerId: _ownerIdTextController.text,
+                                    ownerId: FireAuth.getCurrentUser()!.uid,
                                     tenantId: _tenantIdTextController.text);
 
                                   setState(() {
