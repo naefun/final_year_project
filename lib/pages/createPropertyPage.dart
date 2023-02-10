@@ -182,6 +182,7 @@ class _CreatePropertyPageState extends State<CreatePropertyPage> {
                               onPressed: () async {
                                 if (_registerFormKey.currentState!.validate()) {
                                   String _propertyImageName = selectedImage != null ? Uuid().v4() : "null";
+                                  String propertyId = Uuid().v4();
 
                                   Property propertyDocument = Property(
                                     addressHouseNameOrNumber: _addressHouseNameOrNumberTextController.text,
@@ -191,7 +192,8 @@ class _CreatePropertyPageState extends State<CreatePropertyPage> {
                                     propertyImageName: _propertyImageName,
                                     nextInventoryCheck: _nextInventoryCheckTextController.text,
                                     ownerId: FireAuth.getCurrentUser()!.uid,
-                                    tenantId: _tenantIdTextController.text);
+                                    tenantId: _tenantIdTextController.text,
+                                    propertyId: propertyId);
 
                                   setState(() {
                                     _isProcessing = true;

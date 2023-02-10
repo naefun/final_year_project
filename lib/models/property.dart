@@ -10,6 +10,7 @@ class Property implements Comparable{
   final String? nextInventoryCheck;
   final String? ownerId;
   final String? tenantId;
+  final String? propertyId;
 
   Property(
       {this.addressHouseNameOrNumber,
@@ -19,7 +20,9 @@ class Property implements Comparable{
       this.propertyImageName,
       this.nextInventoryCheck,
       this.ownerId,
-      this.tenantId});
+      this.tenantId,
+      this.propertyId
+      });
 
   factory Property.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
@@ -35,6 +38,7 @@ class Property implements Comparable{
       nextInventoryCheck: data?['nextInventoryCheck'],
       ownerId: data?['ownerId'],
       tenantId: data?['tenantId'],
+      propertyId: data?['propertyId'],
     );
   }
 
@@ -48,6 +52,7 @@ class Property implements Comparable{
       if (nextInventoryCheck != null) "nextInventoryCheck": nextInventoryCheck,
       if (ownerId != null) "ownerId": ownerId,
       if (tenantId != null) "tenantId": tenantId,
+      if (propertyId != null) "propertyId": propertyId,
     };
   }
 
@@ -68,7 +73,8 @@ class Property implements Comparable{
         property.addressRoadName != null &&
         property.addressPostcode != null &&
         property.addressCity != null &&
-        property.ownerId != null;
+        property.ownerId != null &&
+        property.propertyId != null;
   }
   
   @override

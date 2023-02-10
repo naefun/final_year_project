@@ -1,9 +1,13 @@
 import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 import 'package:test_flutter_app/models/inventoryCheck.dart';
+import 'package:test_flutter_app/models/inventoryCheckRequest.dart';
 import 'package:test_flutter_app/pages/propertiesPage.dart';
+import 'package:test_flutter_app/services/dbService.dart';
+import 'package:test_flutter_app/services/fireAuth.dart';
 import 'package:test_flutter_app/widgets/customAppBar.dart';
 import 'package:test_flutter_app/widgets/inventoryCheckCard.dart';
 import 'package:test_flutter_app/widgets/propertyCards.dart';
@@ -17,8 +21,12 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  List<InventoryCheckRequest>? inventoryCheckRequests;
+  List<InventoryCheckCard>? inventoryCheckRequestCards;
   bool reloadData = false;
-  PropertyCards pCards = PropertyCards(numberOfCards: 2,);
+  PropertyCards pCards = PropertyCards(
+    numberOfCards: 2,
+  );
 
   void navigateToPropertiesPage() {
     log("Navigating to properties page");
@@ -45,6 +53,16 @@ class _HomePageState extends State<HomePage> {
       dateCompleted: "30/10/2022",
       propertyAddress: "9 Broken Close, Cheshire, CH6 9HA",
       checkIn: true);
+  InventoryCheckRequest tempInvCheckReq1 = InventoryCheckRequest(
+      type: 1,
+      clerkEmail: "clerk@clerk.com",
+      checkDate: "21/02/2023",
+      propertyId: "1e3a16d9-038e-4073-aa34-03ff6195fabe");
+  InventoryCheckRequest tempInvCheckReq2 = InventoryCheckRequest(
+      type: 2,
+      clerkEmail: "clerkyclerk@clerkyclerk.com",
+      checkDate: "21/03/2023",
+      propertyId: "1e3a16d9-038e-4073-aa34-03ff6195fabe");
 
   @override
   Widget build(BuildContext context) {
@@ -53,8 +71,24 @@ class _HomePageState extends State<HomePage> {
         inventoryCheck: tempInvCheck,
       ),
       InventoryCheckCard(inventoryCheck: tempInvCheck2),
-      InventoryCheckCard(inventoryCheck: tempInvCheck3)
+      InventoryCheckCard(inventoryCheck: tempInvCheck3),
     ];
+    List<InventoryCheckCard> temporaryInvCheckRequestCards = [
+      InventoryCheckCard(
+        inventoryCheckRequest: tempInvCheckReq1,
+      ),
+      // InventoryCheckCard(
+      //   inventoryCheckRequest: tempInvCheckReq2,
+      // ),
+    ];
+
+    if(inventoryCheckRequests==null){
+      getInventoryCheckRequests();
+    }
+
+    if(inventoryCheckRequests!=null && inventoryCheckRequestCards==null){
+      createInventoryCheckRequestCards();
+    }
 
     return Scaffold(
       appBar: CustomAppBar(),
@@ -113,6 +147,42 @@ class _HomePageState extends State<HomePage> {
                     )
                   ],
                 ),
+                const SizedBox(height: 15.0),
+                const Text(
+                  "Inventory check requests",
+                  style: TextStyle(fontSize: 17),
+                ),
+                const SizedBox(height: 15.0),
+                inventoryCheckRequestCards!=null? SizedBox(
+                  height: 180,
+                  child: ListView.builder(
+                    physics: const ClampingScrollPhysics(),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: inventoryCheckRequestCards!.length,
+                    itemBuilder: (BuildContext context, int index) =>
+                        inventoryCheckRequestCards![index],
+                  ),
+                ) : SizedBox(
+                  height: 180,
+                  child: ListView.builder(
+                    physics: const ClampingScrollPhysics(),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: temporaryInvCheckRequestCards.length,
+                    itemBuilder: (BuildContext context, int index) =>
+                        temporaryInvCheckRequestCards[index],
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    SimpleButton(
+                      onPressedFunction: () {
+                        log("view more inventory check requests");
+                      },
+                      buttonLabel: "View more",
+                    )
+                  ],
+                ),
               ],
             ),
           ),
@@ -123,9 +193,50 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> refreshData() async {
     setState(() {
-      pCards = PropertyCards(numberOfCards: 2,);
+      pCards = PropertyCards(
+        numberOfCards: 2,
+      );
     });
   }
 
+  void getInventoryCheckRequests() async {
+    List<InventoryCheckRequest> icrs = [];
+    await DbService.getLandlordInventoryCheckRequests(FireAuth.getCurrentUser()!.uid).then((value) => {
+      if(value!=null){
+        for(QueryDocumentSnapshot<InventoryCheckRequest> icr in value){
+          if(icr.data().checkDate != null && icr.data().clerkEmail!=null && icr.data().propertyId!=null &&
+          icr.data().type!=null){
+            log("creating icr"),
+            icrs.add(InventoryCheckRequest(
+              checkDate: icr.data().checkDate,
+              clerkEmail: icr.data().clerkEmail,
+              propertyId: icr.data().propertyId,
+              type: icr.data().type
+              ))
+          }
+        }
+      }
+    });
 
+    if(icrs.isNotEmpty){
+      setState(() {
+        inventoryCheckRequests = icrs;
+      });
+    }
+  }
+  
+  void createInventoryCheckRequestCards() {
+    List<InventoryCheckCard> icc = [];
+    for(InventoryCheckRequest icr in inventoryCheckRequests!){
+      icc.add(InventoryCheckCard(
+        inventoryCheckRequest: icr,
+      ));
+    }
+
+    if(icc.isNotEmpty){
+      setState(() {
+        inventoryCheckRequestCards = icc;
+      });
+    }
+  }
 }

@@ -124,12 +124,10 @@ class _PropertyCardState extends State<PropertyCard> {
   void setPropertyImageUrl(String imageName) async {
     Uint8List? url;
 
-    try{
+    try {
       url = await CloudStorageService.getPropertyImage(imageName);
-    }catch(e){
-
-    }
-    if(url != null){
+    } catch (e) {}
+    if (url != null) {
       setState(() {
         imageData = url;
       });
@@ -140,6 +138,8 @@ class _PropertyCardState extends State<PropertyCard> {
     log("Navigating to properties page");
 
     PersistentNavBarNavigator.pushNewScreen(context,
-        screen: const PropertyPage());
+        screen: PropertyPage(
+          property: propertyData,
+        ));
   }
 }

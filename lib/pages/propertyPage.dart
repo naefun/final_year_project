@@ -1,6 +1,11 @@
 import 'dart:developer';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:test_flutter_app/models/property.dart';
+import 'package:test_flutter_app/models/user.dart';
+import 'package:test_flutter_app/services/cloudStorageService.dart';
+import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/utilities/global_values.dart';
 import 'package:test_flutter_app/widgets/customAppBar.dart';
 import 'package:test_flutter_app/widgets/requestInventoryCheckDialog.dart';
@@ -10,18 +15,39 @@ import 'package:test_flutter_app/widgets/wideInventoryCheckCard.dart';
 enum SampleItem { itemOne, itemTwo, itemThree }
 
 class PropertyPage extends StatefulWidget {
-  const PropertyPage({Key? key}) : super(key: key);
+  PropertyPage({Key? key, this.property}) : super(key: key);
+
+  Property? property;
 
   @override
   _PropertyPageState createState() => _PropertyPageState();
 }
 
 class _PropertyPageState extends State<PropertyPage> {
+  Property? property;
+  Uint8List? propertyImage;
+  User? landlordDetails;
+  User? tenantDetails;
+
   SampleItem? selectedMenu;
   String? dropdownValue;
 
   @override
   Widget build(BuildContext context) {
+    widget.property != null ? property = widget.property! : null;
+
+    if (property != null &&
+        property!.propertyImageName != null &&
+        propertyImage == null) {
+      getPropertyImage(property!.propertyImageName!);
+    }
+    if(property!=null && property!.ownerId!=null && landlordDetails==null){
+      getLandlordDetails(property!.ownerId!);
+    }
+    // if(property!=null && property!.tenantEmail!=null && tenantDetails==null){
+    //   getTenantDetails(property!.tenantEmail!);
+    // }
+
     return Scaffold(
       appBar: CustomAppBar(),
       body: Container(
@@ -58,8 +84,17 @@ class _PropertyPageState extends State<PropertyPage> {
               ]),
               ClipRRect(
                   borderRadius: BorderRadius.circular(4),
-                  child: const Image(
-                      image: AssetImage("assets/placeholderImages/house.jpg"))),
+                  child: Container(
+                height: 300,
+                decoration: propertyImage != null
+                    ? BoxDecoration(
+                        image: DecorationImage(
+                            image: MemoryImage(propertyImage!), fit: BoxFit.cover))
+                    : const BoxDecoration(
+                        image: DecorationImage(
+                        fit: BoxFit.cover,
+                        image: AssetImage('assets/placeholderImages/house.jpg'),
+                      )))),
               const SizedBox(height: 16.0),
               Wrap(
                 spacing: 50,
@@ -88,7 +123,7 @@ class _PropertyPageState extends State<PropertyPage> {
                         height: 28,
                       ),
                       const SizedBox(width: 8.0),
-                      const Text("John Crifton")
+                      Text(landlordDetails!=null?"${landlordDetails!.firstName!} ${landlordDetails!.lastName!}":"")
                     ],
                   ),
                   Row(
@@ -101,9 +136,9 @@ class _PropertyPageState extends State<PropertyPage> {
                         height: 28,
                       ),
                       const SizedBox(width: 8.0),
-                      const Expanded(
+                      Expanded(
                           child: Text(
-                        "24 Valencia Croft, Birmingham, B35 7PH",
+                        propertyAddress(),
                         overflow: TextOverflow.visible,
                       ))
                     ],
@@ -123,7 +158,7 @@ class _PropertyPageState extends State<PropertyPage> {
                       onPressed: () => showDialog<String>(
                           context: context,
                           builder: (BuildContext context) =>
-                              RequestInventoryCheckDialog()),
+                              RequestInventoryCheckDialog(property: property,)),
                       icon: Icon(Icons.add),
                       label: Text("Request"),
                       style: ElevatedButton.styleFrom(
@@ -218,6 +253,23 @@ class _PropertyPageState extends State<PropertyPage> {
                       child: Row(
                         children: const [
                           Text(
+                            "Requests",
+                            style: TextStyle(color: Color(0xFF636363)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      width: 15,
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                          color: Color(0xFFD9D9D9),
+                          borderRadius: BorderRadius.circular(100)),
+                      padding: EdgeInsets.fromLTRB(15, 5, 15, 5),
+                      child: Row(
+                        children: const [
+                          Text(
                             "Has comments",
                             style: TextStyle(color: Color(0xFF636363)),
                           ),
@@ -258,5 +310,63 @@ class _PropertyPageState extends State<PropertyPage> {
             ]),
           )),
     );
+  }
+
+  void getPropertyImage(String imageName) async {
+    Uint8List? image;
+
+    try {
+      image = await CloudStorageService.getPropertyImage(imageName);
+    } catch (e) {}
+    if (image != null) {
+      setState(() {
+        propertyImage = image;
+      });
+    }
+  }
+  
+  Future<void> getLandlordDetails(String landlordId) async {
+    User? landlord;
+
+    try {
+      landlord = await DbService.getUserDocument(landlordId);
+    } catch (e) {}
+    if (landlord != null) {
+      setState(() {
+        log("Landlord name: ${landlord!.firstName!}");
+        landlordDetails = landlord;
+      });
+    }
+  }
+
+  Future<void> getTenantDetails(String tenantEmail) async {
+    User? tenant;
+    String? tenantId;
+
+    //get tenant id by using email
+
+    if(tenantId == null){
+      return;
+    }
+
+    try {
+      tenant = await DbService.getUserDocument(tenantId);
+    } catch (e) {}
+    if (tenant != null) {
+      setState(() {
+        log("Landlord name: ${tenant!.firstName!}");
+        tenantDetails = tenant;
+      });
+    }
+  }
+
+  String propertyAddress(){
+    if(property!=null && property!.addressHouseNameOrNumber!=null &&
+    property!.addressRoadName!=null && property!.addressCity!=null &&
+    property!.addressPostcode!=null){
+      return("${property!.addressHouseNameOrNumber} ${property!.addressRoadName}, ${property!.addressCity}, ${property!.addressPostcode}");
+    }
+
+    return "No address given";
   }
 }

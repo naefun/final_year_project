@@ -45,4 +45,17 @@ class Validator {
     }
     return null;
   }
+
+  static validateDate({String? date}) {
+    RegExp dateRegEx = RegExp(
+    r"^(0[1-9]|[12][0-9]|3[01])[/](0[1-9]|1[012])[/](19|20)\d\d$");
+  
+    if (date==null || date.isEmpty) {
+      return "Date can't be empty, use the format: DD/MM/YYYY";
+    } else if (!dateRegEx.hasMatch(date)) {
+      return "Enter a valid date using the format: DD/MM/YYYY";
+    }
+
+    return null;
+  }
 }
