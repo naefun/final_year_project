@@ -8,6 +8,7 @@ import 'package:test_flutter_app/services/cloudStorageService.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/utilities/global_values.dart';
 import 'package:test_flutter_app/widgets/customAppBar.dart';
+import 'package:test_flutter_app/widgets/propertyImageAndInfo.dart';
 import 'package:test_flutter_app/widgets/requestInventoryCheckDialog.dart';
 import 'package:test_flutter_app/widgets/simpleButton.dart';
 import 'package:test_flutter_app/widgets/wideInventoryCheckCard.dart';
@@ -41,7 +42,9 @@ class _PropertyPageState extends State<PropertyPage> {
         propertyImage == null) {
       getPropertyImage(property!.propertyImageName!);
     }
-    if(property!=null && property!.ownerId!=null && landlordDetails==null){
+    if (property != null &&
+        property!.ownerId != null &&
+        landlordDetails == null) {
       getLandlordDetails(property!.ownerId!);
     }
     // if(property!=null && property!.tenantEmail!=null && tenantDetails==null){
@@ -82,68 +85,11 @@ class _PropertyPageState extends State<PropertyPage> {
                   ],
                 )
               ]),
-              ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: Container(
-                height: 300,
-                decoration: propertyImage != null
-                    ? BoxDecoration(
-                        image: DecorationImage(
-                            image: MemoryImage(propertyImage!), fit: BoxFit.cover))
-                    : const BoxDecoration(
-                        image: DecorationImage(
-                        fit: BoxFit.cover,
-                        image: AssetImage('assets/placeholderImages/house.jpg'),
-                      )))),
-              const SizedBox(height: 16.0),
-              Wrap(
-                spacing: 50,
-                runSpacing: 10,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Image(
-                        image: AssetImage(IconPaths.tenantIconPath.path),
-                        width: 28,
-                        height: 28,
-                      ),
-                      const SizedBox(width: 8.0),
-                      const Text("Carlos Bento")
-                    ],
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Image(
-                        image: AssetImage(IconPaths.landlordIconPath.path),
-                        width: 28,
-                        height: 28,
-                      ),
-                      const SizedBox(width: 8.0),
-                      Text(landlordDetails!=null?"${landlordDetails!.firstName!} ${landlordDetails!.lastName!}":"")
-                    ],
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Image(
-                        image: AssetImage(IconPaths.addressIconPath.path),
-                        width: 28,
-                        height: 28,
-                      ),
-                      const SizedBox(width: 8.0),
-                      Expanded(
-                          child: Text(
-                        propertyAddress(),
-                        overflow: TextOverflow.visible,
-                      ))
-                    ],
-                  ),
-                ],
+              PropertyImageAndInfo(
+                propertyImage: propertyImage,
+                landlordDetails: landlordDetails,
+                tenantDetails: tenantDetails,
+                propertyAddress: propertyAddress(),
               ),
               const SizedBox(height: 50.0),
               Flex(
@@ -158,7 +104,9 @@ class _PropertyPageState extends State<PropertyPage> {
                       onPressed: () => showDialog<String>(
                           context: context,
                           builder: (BuildContext context) =>
-                              RequestInventoryCheckDialog(property: property,)),
+                              RequestInventoryCheckDialog(
+                                property: property,
+                              )),
                       icon: Icon(Icons.add),
                       label: Text("Request"),
                       style: ElevatedButton.styleFrom(
@@ -324,7 +272,7 @@ class _PropertyPageState extends State<PropertyPage> {
       });
     }
   }
-  
+
   Future<void> getLandlordDetails(String landlordId) async {
     User? landlord;
 
@@ -345,7 +293,7 @@ class _PropertyPageState extends State<PropertyPage> {
 
     //get tenant id by using email
 
-    if(tenantId == null){
+    if (tenantId == null) {
       return;
     }
 
@@ -360,11 +308,13 @@ class _PropertyPageState extends State<PropertyPage> {
     }
   }
 
-  String propertyAddress(){
-    if(property!=null && property!.addressHouseNameOrNumber!=null &&
-    property!.addressRoadName!=null && property!.addressCity!=null &&
-    property!.addressPostcode!=null){
-      return("${property!.addressHouseNameOrNumber} ${property!.addressRoadName}, ${property!.addressCity}, ${property!.addressPostcode}");
+  String propertyAddress() {
+    if (property != null &&
+        property!.addressHouseNameOrNumber != null &&
+        property!.addressRoadName != null &&
+        property!.addressCity != null &&
+        property!.addressPostcode != null) {
+      return ("${property!.addressHouseNameOrNumber} ${property!.addressRoadName}, ${property!.addressCity}, ${property!.addressPostcode}");
     }
 
     return "No address given";

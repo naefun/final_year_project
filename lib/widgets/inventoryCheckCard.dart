@@ -1,8 +1,11 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 import 'package:test_flutter_app/models/inventoryCheck.dart';
 import 'package:test_flutter_app/models/inventoryCheckRequest.dart';
+import 'package:test_flutter_app/models/property.dart';
+import 'package:test_flutter_app/pages/inventoryCheckRequestFormPage.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/services/fireAuth.dart';
 import 'package:test_flutter_app/utilities/date_utilities.dart';
@@ -37,6 +40,7 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
   // in the case that an inventory check request is passed
   String inventoryCheckRequestMessage = "Inventory check request";
   int? daysUntilCheck;
+  Property? icrProperty;
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +62,8 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
         if (daysSinceCheck != null) log(daysSinceCheck.toString());
       }
     } else if (widget.inventoryCheckRequest != null) {
-      DbService.getLandlordInventoryCheckRequests(FireAuth.getCurrentUser()!.uid);
+      DbService.getLandlordInventoryCheckRequests(
+          FireAuth.getCurrentUser()!.uid);
       completedInventoryCheck = false;
       clerkName = widget.inventoryCheckRequest!.clerkEmail;
       commentsSize = 0;
@@ -71,11 +76,31 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
         daysUntilCheck = dateCheck;
         if (daysUntilCheck != null) log(daysUntilCheck.toString());
       }
-      if(propertyAddress == null && widget.inventoryCheckRequest!.propertyId!=null) getPropertyAddress(widget.inventoryCheckRequest!.propertyId!);
+      if (propertyAddress == null &&
+          widget.inventoryCheckRequest!.propertyId != null) {
+        getPropertyAddress(widget.inventoryCheckRequest!.propertyId!);
+      }
+      if (icrProperty == null &&
+          widget.inventoryCheckRequest!.propertyId != null) {
+        getProperty(widget.inventoryCheckRequest!.propertyId!);
+      }
     }
 
     return GestureDetector(
-      onTap: (){log("card pressed");},
+      onTap: () {
+        if (widget.inventoryCheck == null &&
+            widget.inventoryCheckRequest != null) {
+          PersistentNavBarNavigator.pushNewScreen(context,
+              screen: InventoryCheckRequestFormPage(
+                inventoryCheckRequest: widget.inventoryCheckRequest,
+                tenantId: icrProperty!.tenantId!,
+                landlordId: icrProperty!.ownerId!,
+                address: propertyAddress,
+                daysUntilInventoryCheck: daysUntilCheck,
+                property: icrProperty,
+              ));
+        }
+      },
       child: SizedBox(
         width: 170,
         height: 20,
@@ -162,20 +187,28 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
                                 Text(
                                     daysSinceCheck != null
                                         ? daysSinceCheck!.toString()
-                                        : daysUntilCheck != null ? (daysUntilCheck! < -99 ? "99+" : daysUntilCheck! < 0 ? (daysUntilCheck!*-1).toString() : daysUntilCheck!.toString()) : "N/A",
+                                        : daysUntilCheck != null
+                                            ? (daysUntilCheck! < -99
+                                                ? "99+"
+                                                : daysUntilCheck! < 0
+                                                    ? (daysUntilCheck! * -1)
+                                                        .toString()
+                                                    : daysUntilCheck!
+                                                        .toString())
+                                            : "N/A",
                                     style: const TextStyle(fontSize: 25)),
                                 daysUntilCheck != null
-                                    ? daysUntilCheck! < 0 ?
-                                    Expanded(
-                                      child: Text((daysUntilCheck != 1)
-                                          ? " days overdue"
-                                          : " day overdue",
-                                          overflow: TextOverflow.visible),
-                                    ):
-                                    
-                                    Text((daysUntilCheck != 1)
-                                        ? " days to go"
-                                        : " day to go")
+                                    ? daysUntilCheck! < 0
+                                        ? Expanded(
+                                            child: Text(
+                                                (daysUntilCheck != 1)
+                                                    ? " days overdue"
+                                                    : " day overdue",
+                                                overflow: TextOverflow.visible),
+                                          )
+                                        : Text((daysUntilCheck != 1)
+                                            ? " days to go"
+                                            : " day to go")
                                     : Text((daysSinceCheck != null &&
                                             daysSinceCheck != 1)
                                         ? " days ago"
@@ -213,22 +246,45 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
       ),
     );
   }
-  
+
   void getPropertyAddress(String propertyId) async {
     String address = "";
 
     await DbService.getProperty(propertyId).then((value) => {
-      if(value!=null){
-        address+=value.data().addressHouseNameOrNumber!=null?value.data().addressHouseNameOrNumber!:"",
-        address+=value.data().addressRoadName!=null?" ${value.data().addressRoadName!}":"",
-        address+=value.data().addressCity!=null?", ${value.data().addressCity!}":"",
-        address+=value.data().addressPostcode!=null?", ${value.data().addressPostcode!}":""
-      }
-    });
+          if (value != null)
+            {
+              address += value.data().addressHouseNameOrNumber != null
+                  ? value.data().addressHouseNameOrNumber!
+                  : "",
+              address += value.data().addressRoadName != null
+                  ? " ${value.data().addressRoadName!}"
+                  : "",
+              address += value.data().addressCity != null
+                  ? ", ${value.data().addressCity!}"
+                  : "",
+              address += value.data().addressPostcode != null
+                  ? ", ${value.data().addressPostcode!}"
+                  : ""
+            }
+        });
 
-    if(address.isNotEmpty){
+    if (address.isNotEmpty) {
       setState(() {
-        propertyAddress=address;
+        propertyAddress = address;
+      });
+    }
+  }
+
+  void getProperty(String propertyId) async {
+    Property? property;
+
+    await DbService.getProperty(propertyId).then((value) => {
+          if (value != null) {property = value.data()}
+        });
+
+    if (property != null) {
+      setState(() {
+        icrProperty = property;
       });
     }
   }
