@@ -1,9 +1,11 @@
 import 'dart:developer';
 
+import 'package:test_flutter_app/store/actions.dart' as ReduxActions;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_redux/flutter_redux.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
-import 'package:test_flutter_app/models/inventoryCheck.dart';
+import 'package:test_flutter_app/models/inventoryCheckOld.dart';
 import 'package:test_flutter_app/models/inventoryCheckRequest.dart';
 import 'package:test_flutter_app/pages/propertiesPage.dart';
 import 'package:test_flutter_app/services/dbService.dart';
@@ -35,19 +37,19 @@ class _HomePageState extends State<HomePage> {
         screen: const PropertiesPage());
   }
 
-  InventoryCheck tempInvCheck = InventoryCheck(
+  InventoryCheckOld tempInvCheck = InventoryCheckOld(
       comments: List.of(<String>["comment1"]),
       clerkName: "Jason Stathum",
       dateCompleted: "03/02/2023",
       propertyAddress: "24 Valencia Croft, Birmingham, B35 7PH",
       checkIn: true);
-  InventoryCheck tempInvCheck2 = InventoryCheck(
+  InventoryCheckOld tempInvCheck2 = InventoryCheckOld(
       comments: List.of(<String>[]),
       clerkName: "Chris Rock",
       dateCompleted: "28/11/2022",
       propertyAddress: "18 The Cedars, Fleet, GU51 3YL",
       checkIn: false);
-  InventoryCheck tempInvCheck3 = InventoryCheck(
+  InventoryCheckOld tempInvCheck3 = InventoryCheckOld(
       comments: List.of(<String>["comment1", "comment2", "comment3"]),
       clerkName: "John Cena",
       dateCompleted: "30/10/2022",
@@ -82,11 +84,11 @@ class _HomePageState extends State<HomePage> {
       // ),
     ];
 
-    if(inventoryCheckRequests==null){
+    if (inventoryCheckRequests == null) {
       getInventoryCheckRequests();
     }
 
-    if(inventoryCheckRequests!=null && inventoryCheckRequestCards==null){
+    if (inventoryCheckRequests != null && inventoryCheckRequestCards == null) {
       createInventoryCheckRequestCards();
     }
 
@@ -153,25 +155,27 @@ class _HomePageState extends State<HomePage> {
                   style: TextStyle(fontSize: 17),
                 ),
                 const SizedBox(height: 15.0),
-                inventoryCheckRequestCards!=null? SizedBox(
-                  height: 180,
-                  child: ListView.builder(
-                    physics: const ClampingScrollPhysics(),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: inventoryCheckRequestCards!.length,
-                    itemBuilder: (BuildContext context, int index) =>
-                        inventoryCheckRequestCards![index],
-                  ),
-                ) : SizedBox(
-                  height: 180,
-                  child: ListView.builder(
-                    physics: const ClampingScrollPhysics(),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: temporaryInvCheckRequestCards.length,
-                    itemBuilder: (BuildContext context, int index) =>
-                        temporaryInvCheckRequestCards[index],
-                  ),
-                ),
+                inventoryCheckRequestCards != null
+                    ? SizedBox(
+                        height: 180,
+                        child: ListView.builder(
+                          physics: const ClampingScrollPhysics(),
+                          scrollDirection: Axis.horizontal,
+                          itemCount: inventoryCheckRequestCards!.length,
+                          itemBuilder: (BuildContext context, int index) =>
+                              inventoryCheckRequestCards![index],
+                        ),
+                      )
+                    : SizedBox(
+                        height: 180,
+                        child: ListView.builder(
+                          physics: const ClampingScrollPhysics(),
+                          scrollDirection: Axis.horizontal,
+                          itemCount: temporaryInvCheckRequestCards.length,
+                          itemBuilder: (BuildContext context, int index) =>
+                              temporaryInvCheckRequestCards[index],
+                        ),
+                      ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -183,6 +187,11 @@ class _HomePageState extends State<HomePage> {
                     )
                   ],
                 ),
+                StoreConnector<bool, String>(
+                    converter: (store) => store.state.toString(),
+                    builder: (context, viewModel) {
+                      return Text(viewModel, style: TextStyle(fontSize: 24));
+                    }),
               ],
             ),
           ),
@@ -201,39 +210,46 @@ class _HomePageState extends State<HomePage> {
 
   void getInventoryCheckRequests() async {
     List<InventoryCheckRequest> icrs = [];
-    await DbService.getLandlordInventoryCheckRequests(FireAuth.getCurrentUser()!.uid).then((value) => {
-      if(value!=null){
-        for(QueryDocumentSnapshot<InventoryCheckRequest> icr in value){
-          if(icr.data().checkDate != null && icr.data().clerkEmail!=null && icr.data().propertyId!=null &&
-          icr.data().type!=null){
-            log("creating icr"),
-            icrs.add(InventoryCheckRequest(
-              checkDate: icr.data().checkDate,
-              clerkEmail: icr.data().clerkEmail,
-              propertyId: icr.data().propertyId,
-              type: icr.data().type
-              ))
-          }
-        }
-      }
-    });
+    await DbService.getLandlordInventoryCheckRequests(
+            FireAuth.getCurrentUser()!.uid)
+        .then((value) => {
+              if (value != null)
+                {
+                  for (QueryDocumentSnapshot<InventoryCheckRequest> icr
+                      in value)
+                    {
+                      if (icr.data().checkDate != null &&
+                          icr.data().clerkEmail != null &&
+                          icr.data().propertyId != null &&
+                          icr.data().type != null)
+                        {
+                          log("creating icr"),
+                          icrs.add(InventoryCheckRequest(
+                              checkDate: icr.data().checkDate,
+                              clerkEmail: icr.data().clerkEmail,
+                              propertyId: icr.data().propertyId,
+                              type: icr.data().type))
+                        }
+                    }
+                }
+            });
 
-    if(icrs.isNotEmpty){
+    if (icrs.isNotEmpty) {
       setState(() {
         inventoryCheckRequests = icrs;
       });
     }
   }
-  
+
   void createInventoryCheckRequestCards() {
     List<InventoryCheckCard> icc = [];
-    for(InventoryCheckRequest icr in inventoryCheckRequests!){
+    for (InventoryCheckRequest icr in inventoryCheckRequests!) {
       icc.add(InventoryCheckCard(
         inventoryCheckRequest: icr,
       ));
     }
 
-    if(icc.isNotEmpty){
+    if (icc.isNotEmpty) {
       setState(() {
         inventoryCheckRequestCards = icc;
       });

@@ -1,6 +1,9 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_redux/flutter_redux.dart';
+import 'package:test_flutter_app/models/inventoryCheckInputArea.dart';
+import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/utilities/inventory_check_linked_list.dart';
 import 'package:uuid/uuid.dart';
 
@@ -10,19 +13,29 @@ class InventoryCheckFormInput extends StatefulWidget {
   InventoryCheckFormInput(
       {Key? key,
       required this.parentSectionId,
+      required this.inventoryCheckId,
+      required this.inputAreaPosition,
       this.inputTitle,
-      required this.checkboxCallback})
+      required this.checkboxCallback,
+      required this.inputHasBeenUpdatedCallback,
+      this.canUpdateInputs})
       : super(key: key);
 
   String parentSectionId;
+  String inventoryCheckId;
+  int inputAreaPosition;
   String? inputTitle;
   final IntCallback checkboxCallback;
+  final IntCallback inputHasBeenUpdatedCallback;
+  // TODO add callback to pass back an integer when this has finished updating linked structure
+  bool? canUpdateInputs;
 
   @override
   _InventoryCheckFormInputState createState() =>
       _InventoryCheckFormInputState();
 }
 
+// TODO add similar mechanism that is in the section class to know when and how to update the linked structure
 class _InventoryCheckFormInputState extends State<InventoryCheckFormInput> {
   bool inputComplete = false;
   bool showTitleEdit = true;
@@ -34,6 +47,7 @@ class _InventoryCheckFormInputState extends State<InventoryCheckFormInput> {
   final _inputTitleFocus = FocusNode();
   final _inputDetailsController = TextEditingController();
   final _inputDetailsFocus = FocusNode();
+  bool? canUpdateInputs;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +63,13 @@ class _InventoryCheckFormInputState extends State<InventoryCheckFormInput> {
     if (!delete) {
       InventoryCheckLinkedList.addInputField(widget.parentSectionId, id);
     }
+    if (canUpdateInputs != null && canUpdateInputs == true) {
+      log("updating inputs for input: $id");
+      setState(() {
+        canUpdateInputs = false;
+      });
+    }
+
     return GestureDetector(
       onHorizontalDragStart: (details) => log("Swipe start"),
       onHorizontalDragUpdate: (details) {
@@ -164,10 +185,47 @@ class _InventoryCheckFormInputState extends State<InventoryCheckFormInput> {
                       });
                     })
               ],
-            )
+            ),
+            StoreConnector<bool, bool>(
+              converter: (store) => store.state,
+              builder: (context, viewModel) {
+                return SizedBox();
+              },
+              onWillChange: (previous, next) {
+                setState(() {
+                  if (next == true &&
+                      (canUpdateInputs == null || canUpdateInputs == false)) {
+                    canUpdateInputs = next;
+                    updateInputs();
+                  } else if (next == false &&
+                      canUpdateInputs != null &&
+                      canUpdateInputs == true) {
+                    canUpdateInputs = next;
+                  }
+                });
+              },
+            ),
           ],
         ),
       ),
     );
+  }
+
+  void updateInputs() {
+    log("updated input: $id");
+
+    InventoryCheckInputArea inventoryCheckInputArea = InventoryCheckInputArea(
+        id: id,
+        inventoryCheckId: widget.inventoryCheckId,
+        sectionId: widget.parentSectionId,
+        title: inputTitle,
+        details: _inputDetailsController.text,
+        inputPosition: widget.inputAreaPosition,
+        inputComplete: inputComplete);
+    DbService.submitInventoryCheckInputArea(inventoryCheckInputArea);
+    setState(() {
+      canUpdateInputs = false;
+    });
+    // InventoryCheckLinkedList.printSingleSectionDetails(id);
   }
 }

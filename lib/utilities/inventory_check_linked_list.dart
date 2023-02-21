@@ -3,11 +3,17 @@ import 'dart:developer';
 class InventoryCheckLinkedList {
   static InventoryLinkedListSection? root;
 
-  static void addSection(String id) {
+  static void printSingleSectionDetails(String id){
+    if(root!=null){
+      root!.printSingleSectionDetails(id);
+    }
+  }
+
+  static void addSection(String id, bool? essentialSection) {
     if (root == null) {
-      root = InventoryLinkedListSection(id);
+      root = InventoryLinkedListSection(id, essentialSection ?? false);
     } else {
-      root!.addSection(id);
+      root!.addSection(id, essentialSection ?? false);
     }
     log("Size: ${getSize().toString()}");
   }
@@ -57,11 +63,29 @@ class InventoryCheckLinkedList {
   static void clear() {
     root = null;
   }
+
+  static void populateSectionFields(String sectionId, String sectionTitle){
+    if(root!=null){
+      root!.updateSectionFields(sectionTitle, sectionId);
+    }
+  }
+  // static void populateSectionFields(String sectionId, String sectionTitle){
+  //   if(root!=null){
+  //     root!.updateSectionFields(sectionTitle, sectionId);
+  //   }
+  // }
+
+  static void populateSectionInputFields(String sectionId, String fieldId, bool fieldComplete, String fieldTitle, String fieldDetails){
+    if(root!=null){
+      root!.populateSectionInputFields(sectionId, fieldId, fieldComplete, fieldTitle, fieldDetails);
+    }
+  }
 }
 
 class InventoryLinkedListSection {
-  InventoryLinkedListSection(this.id);
+  InventoryLinkedListSection(this.id, this.essentialSection);
 
+  bool essentialSection = false;
   String id;
   String? title;
   InventoryLinkedListInputField? rootInputField;
@@ -86,16 +110,17 @@ class InventoryLinkedListSection {
     }
   }
 
-  void addSection(String newSectionId) {
+  void addSection(String newSectionId, bool essentialSection) {
     if (id == newSectionId) {
       return;
     }
 
     if (nextSection == null) {
-      nextSection = InventoryLinkedListSection(newSectionId);
+      nextSection = InventoryLinkedListSection(newSectionId, essentialSection);
       log("Section added: $id");
+      log("\tessential section: $essentialSection");
     } else {
-      nextSection!.addSection(newSectionId);
+      nextSection!.addSection(newSectionId, essentialSection);
     }
   }
 
@@ -160,11 +185,38 @@ class InventoryLinkedListSection {
       rootInputField!.getNextNode().deleteInputField(inputFieldId);
     }
   }
+
+  void updateSectionFields(String sectionTitle, String sectionId){
+    if(id==sectionId){
+      title=sectionTitle;
+    }else if(id!=sectionId && nextSection!=null){
+      nextSection!.updateSectionFields(sectionTitle, sectionId);
+    }
+  }
+  
+  void populateSectionInputFields(String sectionId, String fieldId, bool fieldComplete, String fieldTitle, String fieldDetails) {
+    if(id==sectionId && rootInputField!=null){
+      rootInputField!.updateInputFields(fieldId, fieldComplete, fieldTitle, fieldDetails);
+    }else if(id!=sectionId && nextSection!=null){
+      nextSection!.populateSectionInputFields(sectionId, fieldId, fieldComplete, fieldTitle, fieldDetails);
+    }
+  }
+  
+  void printSingleSectionDetails(String sectionId) {
+    if(id==sectionId){
+      log("""Section: $id
+        title: $title
+        essential: $essentialSection""");
+    }else if(id!=sectionId && nextSection!=null){
+      nextSection!.printSingleSectionDetails(sectionId);
+    }
+  }
 }
 
 class InventoryLinkedListInputField {
   InventoryLinkedListInputField(this.id);
   String id;
+  bool? fieldComplete;
   String? title;
   String? details;
   InventoryLinkedListInputField? nextInputField;
@@ -203,5 +255,28 @@ class InventoryLinkedListInputField {
         nextInputField!.hasNext()) {
       nextInputField!.deleteInputField(inputFieldId);
     }
+  }
+  
+  void updateInputFields(String fieldId, bool inputFieldComplete, String inputFieldTitle, String inputFieldDetails) {
+    if(id==fieldId){
+      fieldComplete=inputFieldComplete;
+      title=inputFieldTitle;
+      details=inputFieldDetails;
+      printInputFieldDetails();
+    }else if(id!=fieldId && nextInputField!=null){
+      nextInputField!.updateInputFields(fieldId, inputFieldComplete, inputFieldTitle, inputFieldDetails);
+    }
+  }
+  
+  void printInputFieldDetails() {
+    log("""        field id: $id
+        title: $title
+        field complete: $fieldComplete
+        details: $details
+        """);
+
+    // if(nextInputField!=null){
+    //   nextInputField!.printInputFieldDetails();
+    // }
   }
 }

@@ -2,7 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
-import 'package:test_flutter_app/models/inventoryCheck.dart';
+import 'package:test_flutter_app/models/inventoryCheckOld.dart';
 import 'package:test_flutter_app/models/inventoryCheckRequest.dart';
 import 'package:test_flutter_app/models/property.dart';
 import 'package:test_flutter_app/pages/inventoryCheckRequestFormPage.dart';
@@ -12,7 +12,7 @@ import 'package:test_flutter_app/utilities/date_utilities.dart';
 import 'package:test_flutter_app/utilities/global_values.dart';
 
 class InventoryCheckCard extends StatefulWidget {
-  InventoryCheck? inventoryCheck;
+  InventoryCheckOld? inventoryCheck;
 
   InventoryCheckRequest? inventoryCheckRequest;
   InventoryCheckCard(
@@ -92,12 +92,12 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
             widget.inventoryCheckRequest != null) {
           PersistentNavBarNavigator.pushNewScreen(context,
               screen: InventoryCheckRequestFormPage(
-                inventoryCheckRequest: widget.inventoryCheckRequest,
+                inventoryCheckRequest: widget.inventoryCheckRequest!,
                 tenantId: icrProperty!.tenantId!,
                 landlordId: icrProperty!.ownerId!,
                 address: propertyAddress,
                 daysUntilInventoryCheck: daysUntilCheck,
-                property: icrProperty,
+                property: icrProperty!,
               ));
         }
       },
