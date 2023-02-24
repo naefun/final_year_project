@@ -29,7 +29,7 @@ class InventoryCheckInputArea {
       inventoryCheckId: data?['inventoryCheckId'],
       sectionId: data?['sectionId'],
       title: data?['title'],
-      details: data?['title'],
+      details: data?['details'],
       inputComplete: data?['inputComplete'],
       inputPosition: data?['inputPosition'],
     );

@@ -139,13 +139,27 @@ class DbService {
 
   static Future<List<QueryDocumentSnapshot<InventoryCheckSection>>?>
       getInventoryCheckSections(String inventoryCheckId) async {
-
     QuerySnapshot<InventoryCheckSection>? data;
     CollectionReference<InventoryCheckSection> ref =
         InventoryCheckSection.getDocumentReference();
     await ref.where("inventoryCheckId", isEqualTo: inventoryCheckId).get().then(
           (res) => {
             log("Successfully completed for inventory check: $inventoryCheckId ${res.size}"),
+            data = res
+          },
+          onError: (e) => log("Error completing: $e"),
+        );
+    return data?.docs;
+  }
+
+  static Future<List<QueryDocumentSnapshot<InventoryCheckInputArea>>?>
+      getInventoryCheckSubSections(String inventoryCheckSectionId) async {
+    QuerySnapshot<InventoryCheckInputArea>? data;
+    CollectionReference<InventoryCheckInputArea> ref =
+        InventoryCheckInputArea.getDocumentReference();
+    await ref.where("sectionId", isEqualTo: inventoryCheckSectionId).get().then(
+          (res) => {
+            log("Successfully completed for inventory check section: $inventoryCheckSectionId ${res.size}"),
             data = res
           },
           onError: (e) => log("Error completing: $e"),

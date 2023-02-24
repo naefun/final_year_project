@@ -9,6 +9,7 @@ import 'package:test_flutter_app/models/user.dart';
 import 'package:test_flutter_app/services/cloudStorageService.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/widgets/customAppBar.dart';
+import 'package:test_flutter_app/widgets/inventoryCheckSectionArea.dart';
 import 'package:test_flutter_app/widgets/propertyImageAndInfo.dart';
 
 class InventoryCheckPage extends StatefulWidget {
@@ -24,6 +25,8 @@ class InventoryCheckPage extends StatefulWidget {
 class _InventoryCheckPageState extends State<InventoryCheckPage> {
   List<InventoryCheckSection>? essentialInventoryCheckSections;
   List<InventoryCheckSection>? optionalInventoryCheckSections;
+  List<InventoryCheckSectionArea>? essentialInventoryCheckSectionAreas;
+  List<InventoryCheckSectionArea>? optionalInventoryCheckSectionAreas;
   Property? property;
   String? propertyAddress;
   Uint8List? propertyImage;
@@ -44,6 +47,15 @@ class _InventoryCheckPageState extends State<InventoryCheckPage> {
     if (property != null && tenantDetails == null) getTenantDetails();
     allowPropertyImageAndInfoToRender();
 
+    if (essentialInventoryCheckSections != null &&
+        essentialInventoryCheckSections!.isNotEmpty &&
+        essentialInventoryCheckSectionAreas == null)
+      createEssentialInventoryCheckSectionAreas();
+    if (optionalInventoryCheckSections != null &&
+        optionalInventoryCheckSections!.isNotEmpty &&
+        optionalInventoryCheckSectionAreas == null)
+      createOptionalInventoryCheckSectionAreas();
+
     logDetails();
 
     return Scaffold(
@@ -52,12 +64,49 @@ class _InventoryCheckPageState extends State<InventoryCheckPage> {
         padding: EdgeInsets.all(20),
         child: SingleChildScrollView(
           child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              canRenderPropertyImageAndInfo==false? SizedBox(): PropertyImageAndInfo(
-                propertyAddress: propertyAddress,
-                propertyImage: propertyImage,
-                landlordDetails: landlordDetails,
-                tenantDetails: tenantDetails,
+              canRenderPropertyImageAndInfo == false
+                  ? SizedBox()
+                  : PropertyImageAndInfo(
+                      propertyAddress: propertyAddress,
+                      propertyImage: propertyImage,
+                      landlordDetails: landlordDetails,
+                      tenantDetails: tenantDetails,
+                    ),
+              SizedBox(
+                height: 30,
+              ),
+              Text("Essential information"),
+              SizedBox(height: 20),
+              essentialInventoryCheckSectionAreas != null &&
+                      essentialInventoryCheckSectionAreas!.isNotEmpty
+                  ? ListView.builder(
+                      physics: NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: essentialInventoryCheckSectionAreas!.length,
+                      itemBuilder: (BuildContext context, int index) =>
+                          essentialInventoryCheckSectionAreas![index],
+                    )
+                  : SizedBox(),
+              SizedBox(
+                height: 30,
+              ),
+              Text("Aditional information"),
+              SizedBox(height: 20),
+              optionalInventoryCheckSectionAreas != null &&
+                      optionalInventoryCheckSectionAreas!.isNotEmpty
+                  ? ListView.builder(
+                      physics: NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: optionalInventoryCheckSectionAreas!.length,
+                      itemBuilder: (BuildContext context, int index) =>
+                          optionalInventoryCheckSectionAreas![index],
+                    )
+                  : SizedBox(),
+              SizedBox(
+                height: 30,
               ),
             ],
           ),
@@ -184,7 +233,11 @@ class _InventoryCheckPageState extends State<InventoryCheckPage> {
       });
     } else {
       setState(() {
-        tenantDetails = User(userType: 2, firstName: "Jane", lastName: "Doe", email: "noemail@email.com");
+        tenantDetails = User(
+            userType: 2,
+            firstName: "Jane",
+            lastName: "Doe",
+            email: "noemail@email.com");
       });
     }
   }
@@ -216,16 +269,44 @@ class _InventoryCheckPageState extends State<InventoryCheckPage> {
 
     log("Inventory check page: Property address: $tempPropertyAddress");
   }
-  
+
   void allowPropertyImageAndInfoToRender() {
-
-
-
-
-    if (property != null && propertyAddress != null && propertyImage != null && landlordDetails != null && tenantDetails != null) {
+    if (property != null &&
+        propertyAddress != null &&
+        propertyImage != null &&
+        landlordDetails != null &&
+        tenantDetails != null) {
       setState(() {
-      canRenderPropertyImageAndInfo = true;
-    });
+        canRenderPropertyImageAndInfo = true;
+      });
     }
+  }
+
+  void createEssentialInventoryCheckSectionAreas() {
+    List<InventoryCheckSectionArea> inventoryCheckSectionAreas = [];
+
+    for (InventoryCheckSection item in essentialInventoryCheckSections!) {
+      inventoryCheckSectionAreas.add(InventoryCheckSectionArea(
+        inventoryCheckSection: item,
+      ));
+    }
+
+    setState(() {
+      essentialInventoryCheckSectionAreas = inventoryCheckSectionAreas;
+    });
+  }
+
+  void createOptionalInventoryCheckSectionAreas() {
+    List<InventoryCheckSectionArea> inventoryCheckSectionAreas = [];
+
+    for (InventoryCheckSection item in optionalInventoryCheckSections!) {
+      inventoryCheckSectionAreas.add(InventoryCheckSectionArea(
+        inventoryCheckSection: item,
+      ));
+    }
+
+    setState(() {
+      optionalInventoryCheckSectionAreas = inventoryCheckSectionAreas;
+    });
   }
 }
