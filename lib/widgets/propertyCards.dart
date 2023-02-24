@@ -18,18 +18,24 @@ class PropertyCards extends StatefulWidget {
 }
 
 class _PropertyCardsState extends State<PropertyCards> {
-  List<Property> properties = [];
+  List<Property>? properties;
 
   @override
   Widget build(BuildContext context) {
-    if(widget.propertiesArg!=null){
-      properties=widget.propertiesArg!;
-    } else if(properties.isEmpty){
+    if (widget.propertiesArg != null) {
+      properties = widget.propertiesArg!;
+    } else if (properties == null) {
       getPropertyData(FireAuth.getCurrentUser()!.uid);
     }
-    log("Properties retrieved: ${properties.length.toString()}");
 
-    return Column(children: properties.isNotEmpty ? PropertyCardHelper.getPropertyCards(widget.numberOfCards == 0 ? properties.length : widget.numberOfCards, properties)!:[Text("data")]);
+    return Column(
+        children: properties!=null&&properties!.isNotEmpty
+            ? PropertyCardHelper.getPropertyCards(
+                widget.numberOfCards == 0
+                    ? properties!.length
+                    : widget.numberOfCards,
+                properties!)!
+            : [Text("data")]);
   }
 
   void getPropertyData(String userId) async {
@@ -42,6 +48,7 @@ class _PropertyCardsState extends State<PropertyCards> {
       propertiesToReturn.sort();
       properties = propertiesToReturn;
     });
+    log("Properties retrieved: ${propertiesToReturn.length.toString()}");
   }
 }
 
@@ -55,18 +62,23 @@ class PropertyCardHelper {
   //   return propertyCards;
   // }
 
-    static List<PropertyCard>? getPropertyCards(int numberOfCards, List<Property> propertyData) {
-    if(propertyData.isEmpty){
+  static List<PropertyCard>? getPropertyCards(
+      int numberOfCards, List<Property> propertyData) {
+    if (propertyData.isEmpty) {
       return null;
     }
     List<PropertyCard> propertyCards = [];
     for (var i = 0; i < numberOfCards; i++) {
-      if(propertyData.isEmpty){
+      if (propertyData.isEmpty) {
         log("properties is empty");
         propertyCards.add(PropertyCard());
-      }else{
-        if(i >= propertyData.length){break;}
-        propertyCards.add(PropertyCard(propertyData: propertyData[i],));
+      } else {
+        if (i >= propertyData.length) {
+          break;
+        }
+        propertyCards.add(PropertyCard(
+          propertyData: propertyData[i],
+        ));
       }
     }
 

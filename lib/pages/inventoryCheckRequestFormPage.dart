@@ -123,18 +123,6 @@ class _InventoryCheckRequestFormPageState
       });
     }
 
-    // if (updateInventoryCheckLinkedList &&
-    //     numberOfSectionsAndFieldsPopulated ==
-    //         InventoryCheckLinkedList.getSize()) {
-    //   DbService.submitCompleteInventoryCheck(
-    //       InventoryCheckContentsBuilder.build(
-    //           Uuid().v4(), property!.propertyId!, DateTime.now().toString()));
-    //   setState(() {
-    //     updateInventoryCheckLinkedList = false;
-    //     numberOfSectionsAndFieldsPopulated = 0;
-    //   });
-    // }
-
     return Scaffold(
       appBar: CustomAppBar(
         title: "Create inventory check",

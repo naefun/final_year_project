@@ -2,9 +2,11 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
+import 'package:test_flutter_app/models/inventoryCheck.dart';
 import 'package:test_flutter_app/models/inventoryCheckOld.dart';
 import 'package:test_flutter_app/models/inventoryCheckRequest.dart';
 import 'package:test_flutter_app/models/property.dart';
+import 'package:test_flutter_app/pages/inventoryCheckPage.dart';
 import 'package:test_flutter_app/pages/inventoryCheckRequestFormPage.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/services/fireAuth.dart';
@@ -12,11 +14,9 @@ import 'package:test_flutter_app/utilities/date_utilities.dart';
 import 'package:test_flutter_app/utilities/global_values.dart';
 
 class InventoryCheckCard extends StatefulWidget {
-  InventoryCheckOld? inventoryCheck;
+  InventoryCheck inventoryCheck;
 
-  InventoryCheckRequest? inventoryCheckRequest;
-  InventoryCheckCard(
-      {Key? key, this.inventoryCheck, this.inventoryCheckRequest})
+  InventoryCheckCard({Key? key, required this.inventoryCheck})
       : super(key: key);
 
   @override
@@ -26,80 +26,28 @@ class InventoryCheckCard extends StatefulWidget {
 class _InventoryCheckCardState extends State<InventoryCheckCard> {
   Color checkInCardAccentColour = const Color(0xFF579A56);
   Color checkOutCardAccentColour = const Color(0xFFE76E6E);
-  Color inventoryCheckRequestCardAccentColour = const Color(0xFFEFA73A);
-  Color cardAccentColour = const Color(0xFFFFFFFF);
+  Color? cardAccentColour;
   String? clerkName;
   bool? checkIn;
-  String? propertyAddress;
-  bool completedInventoryCheck = true;
-
-  // in the case that a completed inventory check is passed
+  Property? property;
   int? commentsSize;
   int? daysSinceCheck;
-
-  // in the case that an inventory check request is passed
-  String inventoryCheckRequestMessage = "Inventory check request";
-  int? daysUntilCheck;
-  Property? icrProperty;
 
   @override
   Widget build(BuildContext context) {
     if (widget.inventoryCheck != null) {
-      propertyAddress = widget.inventoryCheck!.propertyAddress;
-      clerkName = widget.inventoryCheck!.clerkName;
-      commentsSize = widget.inventoryCheck!.comments != null
-          ? widget.inventoryCheck!.comments!.length
-          : null;
-      checkIn = widget.inventoryCheck!.checkIn;
-      cardAccentColour = checkIn != null && checkIn == true
-          ? checkInCardAccentColour
-          : checkOutCardAccentColour;
-      if (widget.inventoryCheck!.dateCompleted != null &&
-          DateUtilities.validDate(widget.inventoryCheck!.dateCompleted!)) {
-        int? dateCheck = DateUtilities.dateStringToDaysRemaining(
-            DateTime.now(), widget.inventoryCheck!.dateCompleted!);
-        daysSinceCheck = dateCheck != null ? dateCheck * -1 : null;
-        if (daysSinceCheck != null) log(daysSinceCheck.toString());
-      }
-    } else if (widget.inventoryCheckRequest != null) {
-      DbService.getLandlordInventoryCheckRequests(
-          FireAuth.getCurrentUser()!.uid);
-      completedInventoryCheck = false;
-      clerkName = widget.inventoryCheckRequest!.clerkEmail;
-      commentsSize = 0;
-      cardAccentColour = inventoryCheckRequestCardAccentColour;
-      checkIn = widget.inventoryCheckRequest!.type == 1 ? true : false;
-      if (widget.inventoryCheckRequest!.checkDate != null &&
-          DateUtilities.validDate(widget.inventoryCheckRequest!.checkDate!)) {
-        int? dateCheck = DateUtilities.dateStringToDaysRemaining(
-            DateTime.now(), widget.inventoryCheckRequest!.checkDate!);
-        daysUntilCheck = dateCheck;
-        if (daysUntilCheck != null) log(daysUntilCheck.toString());
-      }
-      if (propertyAddress == null &&
-          widget.inventoryCheckRequest!.propertyId != null) {
-        getPropertyAddress(widget.inventoryCheckRequest!.propertyId!);
-      }
-      if (icrProperty == null &&
-          widget.inventoryCheckRequest!.propertyId != null) {
-        getProperty(widget.inventoryCheckRequest!.propertyId!);
-      }
+      if (commentsSize == null) getNumberOfComments();
+      if (property == null) getProperty();
+      if (checkIn == null) setInventoryCheckType();
+      if (cardAccentColour == null) setCardAccentColor();
+      if (daysSinceCheck == null) setDaysSinceCheck();
+      if (clerkName == null) getClerkName();
     }
 
     return GestureDetector(
       onTap: () {
-        if (widget.inventoryCheck == null &&
-            widget.inventoryCheckRequest != null) {
-          PersistentNavBarNavigator.pushNewScreen(context,
-              screen: InventoryCheckRequestFormPage(
-                inventoryCheckRequest: widget.inventoryCheckRequest!,
-                tenantId: icrProperty!.tenantId!,
-                landlordId: icrProperty!.ownerId!,
-                address: propertyAddress,
-                daysUntilInventoryCheck: daysUntilCheck,
-                property: icrProperty!,
-              ));
-        }
+        PersistentNavBarNavigator.pushNewScreen(context,
+            screen: InventoryCheckPage(inventoryCheck: widget.inventoryCheck));
       },
       child: SizedBox(
         width: 170,
@@ -117,16 +65,15 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                     border: Border(
-                        bottom: BorderSide(color: cardAccentColour, width: 7))),
+                        bottom:
+                            BorderSide(color: cardAccentColour!, width: 7))),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       flex: 1,
                       child: Text(
-                        propertyAddress != null
-                            ? propertyAddress!
-                            : "No address given",
+                        getPropertyAddress(),
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 15),
                       ),
@@ -187,32 +134,12 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
                                 Text(
                                     daysSinceCheck != null
                                         ? daysSinceCheck!.toString()
-                                        : daysUntilCheck != null
-                                            ? (daysUntilCheck! < -99
-                                                ? "99+"
-                                                : daysUntilCheck! < 0
-                                                    ? (daysUntilCheck! * -1)
-                                                        .toString()
-                                                    : daysUntilCheck!
-                                                        .toString())
-                                            : "N/A",
+                                        : "N/A",
                                     style: const TextStyle(fontSize: 25)),
-                                daysUntilCheck != null
-                                    ? daysUntilCheck! < 0
-                                        ? Expanded(
-                                            child: Text(
-                                                (daysUntilCheck != 1)
-                                                    ? " days overdue"
-                                                    : " day overdue",
-                                                overflow: TextOverflow.visible),
-                                          )
-                                        : Text((daysUntilCheck != 1)
-                                            ? " days to go"
-                                            : " day to go")
-                                    : Text((daysSinceCheck != null &&
-                                            daysSinceCheck != 1)
-                                        ? " days ago"
-                                        : " day ago"),
+                                Text((daysSinceCheck != null &&
+                                        daysSinceCheck != 1)
+                                    ? " days ago"
+                                    : " day ago"),
                               ],
                             ),
                           )
@@ -247,45 +174,85 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
     );
   }
 
-  void getPropertyAddress(String propertyId) async {
+  String getPropertyAddress() {
+    if (property == null) return "no address given";
+
     String address = "";
 
-    await DbService.getProperty(propertyId).then((value) => {
-          if (value != null)
-            {
-              address += value.data().addressHouseNameOrNumber != null
-                  ? value.data().addressHouseNameOrNumber!
-                  : "",
-              address += value.data().addressRoadName != null
-                  ? " ${value.data().addressRoadName!}"
-                  : "",
-              address += value.data().addressCity != null
-                  ? ", ${value.data().addressCity!}"
-                  : "",
-              address += value.data().addressPostcode != null
-                  ? ", ${value.data().addressPostcode!}"
-                  : ""
-            }
-        });
+    if (property != null) {
+      address += property!.addressHouseNameOrNumber != null
+          ? property!.addressHouseNameOrNumber!
+          : "";
+      address += property!.addressRoadName != null
+          ? " ${property!.addressRoadName!}"
+          : "";
+      address +=
+          property!.addressCity != null ? ", ${property!.addressCity!}" : "";
+      address += property!.addressPostcode != null
+          ? ", ${property!.addressPostcode!}"
+          : "";
+    }
 
-    if (address.isNotEmpty) {
+    return address;
+  }
+
+  void getProperty() async {
+    Property? tempProperty;
+
+    await DbService.getProperty(widget.inventoryCheck.propertyId!)
+        .then((value) => {
+              if (value != null) {tempProperty = value.data()}
+            });
+
+    if (tempProperty != null) {
       setState(() {
-        propertyAddress = address;
+        property = tempProperty;
       });
     }
   }
 
-  void getProperty(String propertyId) async {
-    Property? property;
+  void getNumberOfComments() {
+    setState(() {
+      commentsSize = 0;
+    });
+  }
 
-    await DbService.getProperty(propertyId).then((value) => {
-          if (value != null) {property = value.data()}
-        });
+  void setInventoryCheckType() {
+    setState(() {
+      checkIn = widget.inventoryCheck.type == 1 ? true : false;
+    });
+  }
 
-    if (property != null) {
+  void setCardAccentColor() {
+    setState(() {
+      cardAccentColour = checkIn != null && checkIn == true
+          ? checkInCardAccentColour
+          : checkOutCardAccentColour;
+    });
+  }
+
+  void setDaysSinceCheck() {
+    if (widget.inventoryCheck.checkCompletedDate == null) return;
+    List<String> yyyymmdd =
+        widget.inventoryCheck.checkCompletedDate!.split(" ").first.split("-");
+    String ddmmyyyy = "${yyyymmdd[2]}/${yyyymmdd[1]}/${yyyymmdd[0]}";
+
+    if (DateUtilities.validDate(ddmmyyyy)) {
+      int? dateCheck =
+          DateUtilities.dateStringToDaysRemaining(DateTime.now(), ddmmyyyy);
       setState(() {
-        icrProperty = property;
+        daysSinceCheck = dateCheck != null ? dateCheck * -1 : null;
       });
+      if (daysSinceCheck != null) log(daysSinceCheck.toString());
     }
+  }
+
+  void getClerkName() {
+    DbService.getUserDocumentFromEmail(widget.inventoryCheck.clerkEmail!)
+        .then((value) {
+      setState(() {
+        clerkName = "${value!.firstName} ${value.lastName}";
+      });
+    });
   }
 }

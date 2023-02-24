@@ -6,11 +6,12 @@ class User {
   final int? userType;
   final String? firstName;
   final String? lastName;
+  final String? email;
 
   // static final Map<String, int> userTypes = {"Landlord":1, "Tenant":2, "Clerk":3};
   static final List<List<String>> userTypes = [["Landlord", "1"], ["Tenant", "2"], ["Clerk", "3"]];
 
-  User({this.authId, this.userType, this.firstName, this.lastName});
+  User({this.authId, this.userType, this.firstName, this.lastName, this.email});
 
   factory User.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
@@ -22,6 +23,7 @@ class User {
       userType: data?['userType'],
       firstName: data?['firstName'],
       lastName: data?['lastName'],
+      email: data?['email'],
     );
   }
 
@@ -31,6 +33,7 @@ class User {
       if (userType != null) "userType": userType,
       if (firstName != null) "firstName": firstName,
       if (lastName != null) "lastName": lastName,
+      if (email != null) "email": email,
     };
   }
 
@@ -46,7 +49,7 @@ class User {
   }
 
   static bool fieldsArentEmpty(User user){
-    return user.authId != null && user.firstName!=null && user.lastName!=null && user.userType!=null;
+    return user.authId != null && user.firstName!=null && user.lastName!=null && user.userType!=null && user.email!=null;
   }
 
   static List<List<String>> getUserTypes(){

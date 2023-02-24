@@ -28,6 +28,18 @@ class DbService {
     return data?.docs.first.data();
   }
 
+  static Future<User?> getUserDocumentFromEmail(String email) async {
+    QuerySnapshot<User>? data;
+    CollectionReference<User> ref = User.getDocumentReference();
+    await ref.where("email", isEqualTo: email).get().then(
+          (res) => {log("Successfully completed"), data = res},
+          onError: (e) => log("Error completing: $e"),
+        );
+    return data != null && data!.docs.isNotEmpty
+        ? data!.docs.first.data()
+        : null;
+  }
+
   static Future<void> createUserDocument(User user) async {
     if (!User.fieldsArentEmpty(user)) {
       log("fields are empty");
@@ -65,7 +77,6 @@ class DbService {
 
   static Future<void> submitInventoryCheckSection(
       InventoryCheckSection inventoryCheckSection) async {
-
     CollectionReference<InventoryCheckSection> ref =
         InventoryCheckSection.getDocumentReference();
     await ref.doc().set(inventoryCheckSection);
@@ -74,7 +85,6 @@ class DbService {
 
   static Future<void> submitInventoryCheckInputArea(
       InventoryCheckInputArea inventoryCheckInputArea) async {
-
     CollectionReference<InventoryCheckInputArea> ref =
         InventoryCheckInputArea.getDocumentReference();
     await ref.doc().set(inventoryCheckInputArea);
@@ -83,7 +93,6 @@ class DbService {
 
   static Future<void> submitInventoryCheck(
       InventoryCheck inventoryCheck) async {
-
     CollectionReference<InventoryCheck> ref =
         InventoryCheck.getDocumentReference();
     await ref.doc().set(inventoryCheck);
@@ -98,6 +107,45 @@ class DbService {
     await ref.where("ownerId", isEqualTo: ownerId).get().then(
           (res) => {
             log("Successfully completed for owner: $ownerId ${res.size}"),
+            data = res
+          },
+          onError: (e) => log("Error completing: $e"),
+        );
+    return data?.docs;
+  }
+
+  static Future<List<QueryDocumentSnapshot<InventoryCheck>>?>
+      getInventoryChecks(String ownerId) async {
+    List<QueryDocumentSnapshot<Property>> properties = [];
+    await getOwnedProperties(ownerId).then((value) => properties = value ?? []);
+
+    List<String> propertyIds = [];
+    for (int i = 0; i < properties.length; i++) {
+      propertyIds.add(properties[i].data().propertyId!);
+    }
+
+    QuerySnapshot<InventoryCheck>? data;
+    CollectionReference<InventoryCheck> ref =
+        InventoryCheck.getDocumentReference();
+    await ref.where("propertyId", whereIn: propertyIds).get().then(
+          (res) => {
+            log("Successfully completed for owner: $ownerId ${res.size}"),
+            data = res
+          },
+          onError: (e) => log("Error completing: $e"),
+        );
+    return data?.docs;
+  }
+
+  static Future<List<QueryDocumentSnapshot<InventoryCheckSection>>?>
+      getInventoryCheckSections(String inventoryCheckId) async {
+
+    QuerySnapshot<InventoryCheckSection>? data;
+    CollectionReference<InventoryCheckSection> ref =
+        InventoryCheckSection.getDocumentReference();
+    await ref.where("inventoryCheckId", isEqualTo: inventoryCheckId).get().then(
+          (res) => {
+            log("Successfully completed for inventory check: $inventoryCheckId ${res.size}"),
             data = res
           },
           onError: (e) => log("Error completing: $e"),
@@ -134,6 +182,9 @@ class DbService {
 
     log(landlordPropertyIds.toString());
 
+    if (landlordPropertyIds.isEmpty) {
+      return null;
+    }
     QuerySnapshot<InventoryCheckRequest>? data;
     CollectionReference<InventoryCheckRequest> ref =
         InventoryCheckRequest.getDocumentReference();

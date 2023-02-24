@@ -124,7 +124,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       SizedBox(height: 16.0),
                       DropdownButtonFormField<String>(
-                        validator: (value) => Validator.validateUserType(userType: value),
+                        validator: (value) =>
+                            Validator.validateUserType(userType: value),
                         hint: Text("Account type"),
                         value: dropdownValue,
                         onChanged: (value) => {
@@ -169,7 +170,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                       authId: user?.uid,
                                       firstName: _firstNameTextController.text,
                                       lastName: _lastNameTextController.text,
-                                      userType: int.tryParse(dropdownValue!));
+                                      userType: int.tryParse(dropdownValue!),
+                                      email: _emailTextController.text);
 
                                   if (user != null &&
                                       AppUser.User.fieldsArentEmpty(

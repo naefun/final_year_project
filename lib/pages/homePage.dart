@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:test_flutter_app/models/inventoryCheck.dart';
 import 'package:test_flutter_app/store/actions.dart' as ReduxActions;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/services/fireAuth.dart';
 import 'package:test_flutter_app/widgets/customAppBar.dart';
 import 'package:test_flutter_app/widgets/inventoryCheckCard.dart';
+import 'package:test_flutter_app/widgets/inventoryCheckCardOld.dart';
 import 'package:test_flutter_app/widgets/propertyCards.dart';
 import 'package:test_flutter_app/widgets/simpleButton.dart';
 
@@ -23,8 +25,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  List<InventoryCheck>? inventoryChecks;
+  List<InventoryCheckCard>? inventoryCheckCards;
   List<InventoryCheckRequest>? inventoryCheckRequests;
-  List<InventoryCheckCard>? inventoryCheckRequestCards;
+  List<InventoryCheckCardOld>? inventoryCheckRequestCards;
   bool reloadData = false;
   PropertyCards pCards = PropertyCards(
     numberOfCards: 2,
@@ -37,6 +41,13 @@ class _HomePageState extends State<HomePage> {
         screen: const PropertiesPage());
   }
 
+  InventoryCheck newTempInvCheck = InventoryCheck(
+      id: "f2dedd50-1683-462e-b6b8-ac2943c0b962",
+      propertyId: "7a723b2c-846b-4969-8f7a-fdec218baeef",
+      complete: true,
+      type: 1,
+      clerkEmail: "n@n.co",
+      checkCompletedDate: "2023-02-21 01:32:32.418722");
   InventoryCheckOld tempInvCheck = InventoryCheckOld(
       comments: List.of(<String>["comment1"]),
       clerkName: "Jason Stathum",
@@ -68,20 +79,28 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    List<InventoryCheckCard> temporaryCards = [
-      InventoryCheckCard(
+    if (inventoryChecks==null) getInventoryChecks();
+    if (inventoryChecks!=null && inventoryCheckCards==null) createInventoryCheckCards();
+
+    List<InventoryCheckCardOld> temporaryCards = [
+      InventoryCheckCardOld(
         inventoryCheck: tempInvCheck,
       ),
-      InventoryCheckCard(inventoryCheck: tempInvCheck2),
-      InventoryCheckCard(inventoryCheck: tempInvCheck3),
+      InventoryCheckCardOld(inventoryCheck: tempInvCheck2),
+      InventoryCheckCardOld(inventoryCheck: tempInvCheck3),
     ];
-    List<InventoryCheckCard> temporaryInvCheckRequestCards = [
-      InventoryCheckCard(
+    List<InventoryCheckCardOld> temporaryInvCheckRequestCards = [
+      InventoryCheckCardOld(
         inventoryCheckRequest: tempInvCheckReq1,
       ),
       // InventoryCheckCard(
       //   inventoryCheckRequest: tempInvCheckReq2,
       // ),
+    ];
+    List<InventoryCheckCard> tempInvCheckCards = [
+      InventoryCheckCard(
+        inventoryCheck: newTempInvCheck,
+      ),
     ];
 
     if (inventoryCheckRequests == null) {
@@ -128,6 +147,33 @@ class _HomePageState extends State<HomePage> {
                   style: TextStyle(fontSize: 17),
                 ),
                 const SizedBox(height: 15.0),
+                inventoryCheckCards!=null&&inventoryCheckCards!.isNotEmpty?SizedBox(
+                  height: 180,
+                  child: ListView.builder(
+                    physics: const ClampingScrollPhysics(),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: inventoryCheckCards!.length,
+                    itemBuilder: (BuildContext context, int index) =>
+                        inventoryCheckCards![index],
+                  ),
+                ):Text("No inventory checks"),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    SimpleButton(
+                      onPressedFunction: () {
+                        log("view more inventory checks");
+                      },
+                      buttonLabel: "View more",
+                    )
+                  ],
+                ),
+                const SizedBox(height: 15.0),
+                const Text(
+                  "Recent inventory checks - OLD",
+                  style: TextStyle(fontSize: 17),
+                ),
+                const SizedBox(height: 15.0),
                 SizedBox(
                   height: 180,
                   child: ListView.builder(
@@ -167,14 +213,8 @@ class _HomePageState extends State<HomePage> {
                         ),
                       )
                     : SizedBox(
-                        height: 180,
-                        child: ListView.builder(
-                          physics: const ClampingScrollPhysics(),
-                          scrollDirection: Axis.horizontal,
-                          itemCount: temporaryInvCheckRequestCards.length,
-                          itemBuilder: (BuildContext context, int index) =>
-                              temporaryInvCheckRequestCards[index],
-                        ),
+                        height: 20,
+                        child: Text("no inv checks"),
                       ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -206,6 +246,11 @@ class _HomePageState extends State<HomePage> {
         numberOfCards: 2,
       );
     });
+    await clearStates();
+    getInventoryCheckRequests();
+    getInventoryChecks();
+    createInventoryCheckCards();
+    createInventoryCheckRequestCards();
   }
 
   void getInventoryCheckRequests() async {
@@ -242,9 +287,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   void createInventoryCheckRequestCards() {
-    List<InventoryCheckCard> icc = [];
+    List<InventoryCheckCardOld> icc = [];
     for (InventoryCheckRequest icr in inventoryCheckRequests!) {
-      icc.add(InventoryCheckCard(
+      icc.add(InventoryCheckCardOld(
         inventoryCheckRequest: icr,
       ));
     }
@@ -254,5 +299,40 @@ class _HomePageState extends State<HomePage> {
         inventoryCheckRequestCards = icc;
       });
     }
+  }
+  
+  Future<void> getInventoryChecks() async {
+    List<QueryDocumentSnapshot<InventoryCheck>> inventoryCheckQueryDocuments = [];
+    await DbService.getInventoryChecks(FireAuth.getCurrentUser()!.uid).then((value) {inventoryCheckQueryDocuments=value ?? [];});
+    
+    List<InventoryCheck> tempInventoryChecks = [];
+    for (var i = 0; i < inventoryCheckQueryDocuments.length; i++) {
+      tempInventoryChecks.add(inventoryCheckQueryDocuments[i].data());
+    }
+
+    setState(() {
+      inventoryChecks=tempInventoryChecks;
+    });
+  }
+  
+  void createInventoryCheckCards() {
+    List<InventoryCheckCard> invCheckCards = [];
+
+    for (InventoryCheck invCheck in inventoryChecks!) {
+      invCheckCards.add(InventoryCheckCard(inventoryCheck: invCheck));
+    }
+
+    setState(() {
+      inventoryCheckCards=invCheckCards;
+    });
+  }
+
+  Future<void> clearStates() async{
+    setState(() {
+      inventoryChecks=null;
+      inventoryCheckRequests=null;
+      inventoryCheckCards=null;
+      inventoryCheckRequestCards=null;
+    });
   }
 }
