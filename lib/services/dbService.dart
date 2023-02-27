@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:test_flutter_app/models/comment.dart';
 import 'package:test_flutter_app/models/inventoryCheck.dart';
 import 'package:test_flutter_app/models/inventoryCheckContents.dart';
 import 'package:test_flutter_app/models/inventoryCheckInputArea.dart';
@@ -60,6 +61,23 @@ class DbService {
     CollectionReference<Property> ref = Property.getDocumentReference();
     await ref.doc(property.propertyId).set(property);
     log("property document created");
+  }
+
+  static Future<void> createComment(Comment comment) async {
+    CollectionReference<Comment> ref = Comment.getDocumentReference();
+    await ref.doc().set(comment);
+    log("Comment document created");
+  }
+
+  static Future<List<QueryDocumentSnapshot<Comment>>?> getComments(
+      String subsectionId) async {
+    QuerySnapshot<Comment>? data;
+    CollectionReference<Comment> ref = Comment.getDocumentReference();
+    await ref.where("subsectionId", isEqualTo: subsectionId).get().then(
+          (res) => {log("Successfully retrieved comments"), data = res},
+          onError: (e) => log("Error completing: $e"),
+        );
+    return data?.docs;
   }
 
   static Future<void> createInventoryCheckRequestDocument(

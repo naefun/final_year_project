@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:test_flutter_app/models/inventoryCheckInputArea.dart';
+import 'package:test_flutter_app/widgets/subsectionCommentSection.dart';
 
 class InventoryCheckSubSectionArea extends StatefulWidget {
-  InventoryCheckSubSectionArea({Key? key, required this.inventoryCheckInputArea}) : super(key: key);
+  InventoryCheckSubSectionArea(
+      {Key? key, required this.inventoryCheckInputArea})
+      : super(key: key);
 
   InventoryCheckInputArea inventoryCheckInputArea;
 
@@ -14,11 +17,14 @@ class InventoryCheckSubSectionArea extends StatefulWidget {
 class _InventoryCheckSubSectionAreaState
     extends State<InventoryCheckSubSectionArea> {
 
+    bool showComments = false;
+
   @override
   Widget build(BuildContext context) {
     return Container(
         child: Card(
-          elevation: 4,
+      color: Color(0xFFEDEDED),
+      elevation: 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(4),
       ),
@@ -33,22 +39,18 @@ class _InventoryCheckSubSectionAreaState
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(widget.inventoryCheckInputArea.title!=null?widget.inventoryCheckInputArea.title!:""),
+                Text(widget.inventoryCheckInputArea.title != null
+                    ? widget.inventoryCheckInputArea.title!
+                    : ""),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     IconButton(
-                      onPressed: () {},
+                      onPressed: () {toggleCommentsVisibility();},
                       icon: Icon(Icons.comment),
                       iconSize: 20,
                       padding: EdgeInsets.all(0),
                     ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: Icon(Icons.add_comment),
-                      iconSize: 20,
-                      padding: EdgeInsets.all(0),
-                    )
                   ],
                 )
               ],
@@ -56,10 +58,20 @@ class _InventoryCheckSubSectionAreaState
           ),
           Container(
             padding: EdgeInsets.all(8),
-            child: Text(widget.inventoryCheckInputArea.details!=null?widget.inventoryCheckInputArea.details!:""),
-          )
+            child: Text(widget.inventoryCheckInputArea.details != null
+                ? widget.inventoryCheckInputArea.details!
+                : ""),
+          ),
+          showComments==false?SizedBox():SubsectionCommentSection(
+              inventoryCheckSubsectionId: widget.inventoryCheckInputArea.id!),
         ]),
       ),
     ));
+  }
+
+  void toggleCommentsVisibility(){
+    setState(() {
+      showComments = !showComments;
+    });
   }
 }
