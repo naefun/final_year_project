@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:test_flutter_app/models/inventoryCheck.dart';
+import 'package:test_flutter_app/models/property.dart';
 import 'package:test_flutter_app/store/actions.dart' as ReduxActions;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -29,10 +30,9 @@ class _HomePageState extends State<HomePage> {
   List<InventoryCheckCard>? inventoryCheckCards;
   List<InventoryCheckRequest>? inventoryCheckRequests;
   List<InventoryCheckCardOld>? inventoryCheckRequestCards;
+  List<Property>? properties;
   bool reloadData = false;
-  PropertyCards pCards = PropertyCards(
-    numberOfCards: 2,
-  );
+  PropertyCards? pCards;
 
   void navigateToPropertiesPage() {
     log("Navigating to properties page");
@@ -79,8 +79,16 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    if (inventoryChecks==null) getInventoryChecks();
-    if (inventoryChecks!=null && inventoryCheckCards==null) createInventoryCheckCards();
+    if (inventoryChecks == null) getInventoryChecks();
+    if (inventoryChecks != null &&
+        inventoryChecks!.isNotEmpty &&
+        inventoryCheckCards == null) {
+      createInventoryCheckCards();
+    }
+    if (properties == null) getProperties();
+    if (properties != null && pCards == null) {
+      setPropertyCards();
+    }
 
     List<InventoryCheckCardOld> temporaryCards = [
       InventoryCheckCardOld(
@@ -93,9 +101,6 @@ class _HomePageState extends State<HomePage> {
       InventoryCheckCardOld(
         inventoryCheckRequest: tempInvCheckReq1,
       ),
-      // InventoryCheckCard(
-      //   inventoryCheckRequest: tempInvCheckReq2,
-      // ),
     ];
     List<InventoryCheckCard> tempInvCheckCards = [
       InventoryCheckCard(
@@ -131,13 +136,18 @@ class _HomePageState extends State<HomePage> {
                   style: TextStyle(fontSize: 20),
                 ),
                 const SizedBox(height: 15.0),
-                pCards,
+                properties != null
+                    ? PropertyCards(
+                        numberOfCards: 2,
+                        propertiesArg: properties,
+                      )
+                    : SizedBox(),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     SimpleButton(
                       onPressedFunction: navigateToPropertiesPage,
-                      buttonLabel: "View more",
+                      buttonLabel: "View all properties",
                     )
                   ],
                 ),
@@ -147,43 +157,18 @@ class _HomePageState extends State<HomePage> {
                   style: TextStyle(fontSize: 17),
                 ),
                 const SizedBox(height: 15.0),
-                inventoryCheckCards!=null&&inventoryCheckCards!.isNotEmpty?SizedBox(
-                  height: 180,
-                  child: ListView.builder(
-                    physics: const ClampingScrollPhysics(),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: inventoryCheckCards!.length,
-                    itemBuilder: (BuildContext context, int index) =>
-                        inventoryCheckCards![index],
-                  ),
-                ):Text("No inventory checks"),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    SimpleButton(
-                      onPressedFunction: () {
-                        log("view more inventory checks");
-                      },
-                      buttonLabel: "View more",
-                    )
-                  ],
-                ),
-                const SizedBox(height: 15.0),
-                const Text(
-                  "Recent inventory checks - OLD",
-                  style: TextStyle(fontSize: 17),
-                ),
-                const SizedBox(height: 15.0),
-                SizedBox(
-                  height: 180,
-                  child: ListView.builder(
-                    physics: const ClampingScrollPhysics(),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: temporaryCards.length,
-                    itemBuilder: (BuildContext context, int index) =>
-                        temporaryCards[index],
-                  ),
-                ),
+                inventoryCheckCards != null && inventoryCheckCards!.isNotEmpty
+                    ? SizedBox(
+                        height: 180,
+                        child: ListView.builder(
+                          physics: const ClampingScrollPhysics(),
+                          scrollDirection: Axis.horizontal,
+                          itemCount: inventoryCheckCards!.length,
+                          itemBuilder: (BuildContext context, int index) =>
+                              inventoryCheckCards![index],
+                        ),
+                      )
+                    : Text("You have no recent inventory checks"),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -214,7 +199,7 @@ class _HomePageState extends State<HomePage> {
                       )
                     : SizedBox(
                         height: 20,
-                        child: Text("no inv checks"),
+                        child: Text("You have no inventory check requests"),
                       ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -227,11 +212,6 @@ class _HomePageState extends State<HomePage> {
                     )
                   ],
                 ),
-                StoreConnector<bool, String>(
-                    converter: (store) => store.state.toString(),
-                    builder: (context, viewModel) {
-                      return Text(viewModel, style: TextStyle(fontSize: 24));
-                    }),
               ],
             ),
           ),
@@ -241,16 +221,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> refreshData() async {
-    setState(() {
-      pCards = PropertyCards(
-        numberOfCards: 2,
-      );
-    });
     await clearStates();
-    getInventoryCheckRequests();
-    getInventoryChecks();
-    createInventoryCheckCards();
-    createInventoryCheckRequestCards();
+    // getInventoryCheckRequests();
+    // getInventoryChecks();
+    // createInventoryCheckCards();
+    // // createInventoryCheckRequestCards();
+    // setPropertyCards();
   }
 
   void getInventoryCheckRequests() async {
@@ -266,24 +242,17 @@ class _HomePageState extends State<HomePage> {
                       if (icr.data().checkDate != null &&
                           icr.data().clerkEmail != null &&
                           icr.data().propertyId != null &&
-                          icr.data().type != null)
-                        {
-                          log("creating icr"),
-                          icrs.add(InventoryCheckRequest(
-                              checkDate: icr.data().checkDate,
-                              clerkEmail: icr.data().clerkEmail,
-                              propertyId: icr.data().propertyId,
-                              type: icr.data().type))
-                        }
+                          icr.data().type != null &&
+                          icr.data().complete != null &&
+                          icr.data().complete == false)
+                        {icrs.add(icr.data())}
                     }
                 }
             });
 
-    if (icrs.isNotEmpty) {
-      setState(() {
-        inventoryCheckRequests = icrs;
-      });
-    }
+    setState(() {
+      inventoryCheckRequests = icrs;
+    });
   }
 
   void createInventoryCheckRequestCards() {
@@ -300,39 +269,74 @@ class _HomePageState extends State<HomePage> {
       });
     }
   }
-  
+
   Future<void> getInventoryChecks() async {
-    List<QueryDocumentSnapshot<InventoryCheck>> inventoryCheckQueryDocuments = [];
-    await DbService.getInventoryChecks(FireAuth.getCurrentUser()!.uid).then((value) {inventoryCheckQueryDocuments=value ?? [];});
-    
+    List<QueryDocumentSnapshot<InventoryCheck>> inventoryCheckQueryDocuments =
+        [];
+    await DbService.getInventoryChecks(FireAuth.getCurrentUser()!.uid)
+        .then((value) {
+      inventoryCheckQueryDocuments = value ?? [];
+    });
+
     List<InventoryCheck> tempInventoryChecks = [];
     for (var i = 0; i < inventoryCheckQueryDocuments.length; i++) {
       tempInventoryChecks.add(inventoryCheckQueryDocuments[i].data());
     }
 
     setState(() {
-      inventoryChecks=tempInventoryChecks;
+      inventoryChecks = tempInventoryChecks;
     });
   }
-  
+
   void createInventoryCheckCards() {
     List<InventoryCheckCard> invCheckCards = [];
 
-    for (InventoryCheck invCheck in inventoryChecks!) {
-      invCheckCards.add(InventoryCheckCard(inventoryCheck: invCheck));
+    if (inventoryChecks != null) {
+      for (InventoryCheck invCheck in inventoryChecks!) {
+        invCheckCards.add(InventoryCheckCard(inventoryCheck: invCheck));
+      }
     }
 
     setState(() {
-      inventoryCheckCards=invCheckCards;
+      inventoryCheckCards = invCheckCards;
     });
   }
 
-  Future<void> clearStates() async{
+  Future<void> clearStates() async {
     setState(() {
-      inventoryChecks=null;
-      inventoryCheckRequests=null;
-      inventoryCheckCards=null;
-      inventoryCheckRequestCards=null;
+      properties = null;
+      inventoryChecks = null;
+      inventoryCheckRequests = null;
+      inventoryCheckCards = null;
+      inventoryCheckRequestCards = null;
+      pCards = null;
+    });
+  }
+
+  Future<void> setPropertyCards() async {
+    PropertyCards tempPropertyCards = PropertyCards(
+      numberOfCards: 2,
+      propertiesArg: properties,
+    );
+
+    setState(() {
+      pCards = tempPropertyCards;
+    });
+  }
+
+  void getProperties() async {
+    List<Property> tempProperties = [];
+    List<QueryDocumentSnapshot<Property>> propertyQueryDocuments = [];
+
+    await DbService.getOwnedProperties(FireAuth.getCurrentUser()!.uid)
+        .then((value) => propertyQueryDocuments = value ?? []);
+
+    for (QueryDocumentSnapshot<Property> d in propertyQueryDocuments) {
+      tempProperties.add(d.data());
+    }
+
+    setState(() {
+      properties = tempProperties;
     });
   }
 }

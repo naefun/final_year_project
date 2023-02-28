@@ -4,11 +4,12 @@ import 'package:test_flutter_app/services/dbService.dart';
 class Comment {
   final String? id;
   final String? userId;
+  final String? inventoryCheckId;
   final String? commentContent;
   final String? timestamp;
   final String? subsectionId;
 
-  Comment({this.id, this.userId, this.commentContent, this.timestamp, this.subsectionId});
+  Comment({this.id, this.userId, this.inventoryCheckId, this.commentContent, this.timestamp, this.subsectionId});
 
   factory Comment.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
@@ -18,6 +19,7 @@ class Comment {
     return Comment(
       id: data?['id'],
       userId: data?['userId'],
+      inventoryCheckId: data?['inventoryCheckId'],
       commentContent: data?['commentContent'],
       timestamp: data?['timestamp'],
       subsectionId: data?['subsectionId'],
@@ -28,6 +30,7 @@ class Comment {
     return {
       if (id != null) "id": id,
       if (userId != null) "userId": userId,
+      if (inventoryCheckId != null) "inventoryCheckId": inventoryCheckId,
       if (commentContent != null) "commentContent": commentContent,
       if (timestamp != null) "timestamp": timestamp,
       if (subsectionId != null) "subsectionId": subsectionId,

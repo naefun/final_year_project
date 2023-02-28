@@ -9,10 +9,11 @@ import 'package:test_flutter_app/widgets/singleComment.dart';
 import 'package:uuid/uuid.dart';
 
 class SubsectionCommentSection extends StatefulWidget {
-  SubsectionCommentSection({Key? key, required this.inventoryCheckSubsectionId})
+  SubsectionCommentSection({Key? key, required this.inventoryCheckSubsectionId, required this.inventoryCheckId})
       : super(key: key);
 
   String inventoryCheckSubsectionId;
+  String inventoryCheckId;
 
   @override
   _SubsectionCommentSectionState createState() =>
@@ -114,6 +115,7 @@ class _SubsectionCommentSectionState extends State<SubsectionCommentSection> {
     Comment newComment = Comment(
         id: Uuid().v4(),
         userId: FireAuth.getCurrentUser()!.uid,
+        inventoryCheckId: widget.inventoryCheckId,
         commentContent: message,
         timestamp: DateTime.now().toString(),
         subsectionId: widget.inventoryCheckSubsectionId);

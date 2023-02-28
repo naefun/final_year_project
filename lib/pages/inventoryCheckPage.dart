@@ -44,7 +44,7 @@ class _InventoryCheckPageState extends State<InventoryCheckPage> {
     if (property != null && propertyAddress == null) setPropertyAddress();
     if (property != null && propertyImage == null) getPropertyImage();
     if (property != null && landlordDetails == null) getLandlordDetails();
-    if (property != null && tenantDetails == null) getTenantDetails();
+    if (property != null && property!.tenantId!=null && tenantDetails == null) getTenantDetails();
     allowPropertyImageAndInfoToRender();
 
     if (essentialInventoryCheckSections != null &&
@@ -231,15 +231,8 @@ class _InventoryCheckPageState extends State<InventoryCheckPage> {
       setState(() {
         tenantDetails = tempTenantDetails;
       });
-    } else {
-      setState(() {
-        tenantDetails = User(
-            userType: 2,
-            firstName: "Jane",
-            lastName: "Doe",
-            email: "noemail@email.com");
-      });
     }
+          log("Set tenant details");
   }
 
   void getProperty() async {
@@ -274,8 +267,7 @@ class _InventoryCheckPageState extends State<InventoryCheckPage> {
     if (property != null &&
         propertyAddress != null &&
         propertyImage != null &&
-        landlordDetails != null &&
-        tenantDetails != null) {
+        landlordDetails != null) {
       setState(() {
         canRenderPropertyImageAndInfo = true;
       });

@@ -211,9 +211,12 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
     }
   }
 
-  void getNumberOfComments() {
-    setState(() {
-      commentsSize = 0;
+  Future<void> getNumberOfComments() async {
+    await DbService.getNumberOfInventoryCheckComments(widget.inventoryCheck.id!)
+        .then((value) {
+      setState(() {
+        commentsSize = value;
+      });
     });
   }
 
@@ -248,6 +251,7 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
   }
 
   void getClerkName() {
+    if (widget.inventoryCheck.clerkEmail == null) return;
     DbService.getUserDocumentFromEmail(widget.inventoryCheck.clerkEmail!)
         .then((value) {
       setState(() {

@@ -55,11 +55,12 @@ class _PropertyImageAndInfoState extends State<PropertyImageAndInfo> {
                     children: [
                       Image(
                         image: AssetImage(IconPaths.tenantIconPath.path),
+                        color: tenantDetails==null?Color(0xFFE76E6E):Color(0xFF579A56),
                         width: 28,
                         height: 28,
                       ),
                       const SizedBox(width: 8.0),
-                      const Text("Carlos Bento")
+                      tenantDetails==null?Text("Vacant property"):Text("${tenantDetails!.firstName} ${tenantDetails!.lastName}"),
                     ],
                   ),
                   Row(

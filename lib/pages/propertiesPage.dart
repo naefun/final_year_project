@@ -17,29 +17,31 @@ class PropertiesPage extends StatefulWidget {
 }
 
 class _PropertiesPageState extends State<PropertiesPage> {
-  List<Property> properties = [];
+  List<Property>? properties;
+  List<PropertyCard>? propertyCards;
   @override
   Widget build(BuildContext context) {
-    if (properties.isEmpty) getProperties();
-    List<PropertyCard>? propertyCards =
-        PropertyCardHelper.getPropertyCards(properties.length, properties);
-    log(properties.length);
+    if (properties == null) getProperties();
+    if (properties != null && propertyCards == null) propertyCards = PropertyCardHelper.getPropertyCards(properties!.length, properties!);
     return Scaffold(
       appBar: CustomAppBar(),
       body: Container(
+        width: double.infinity,
         color: Colors.white,
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
-              propertyCards != null
+              propertyCards != null && propertyCards!.isNotEmpty
                   ? Expanded(
                       child: ListView.builder(
-                          itemCount: propertyCards.length,
+                          itemCount: propertyCards!.length,
                           itemBuilder: (context, index) =>
-                              propertyCards.elementAt(index)))
-                  : const Text("No properties found",
-                  style: TextStyle(fontSize: 10),)
+                              propertyCards!.elementAt(index)))
+                  : const Text(
+                      "No properties found",
+                      style: TextStyle(fontSize: 25),
+                    )
             ],
           ),
         ),

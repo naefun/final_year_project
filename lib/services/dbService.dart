@@ -80,6 +80,17 @@ class DbService {
     return data?.docs;
   }
 
+  static Future<int> getNumberOfInventoryCheckComments(
+      String inventoryCheckId) async {
+    int data = 0;
+    CollectionReference<Comment> ref = Comment.getDocumentReference();
+    await ref.where("inventoryCheckId", isEqualTo: inventoryCheckId).get().then(
+          (res) => {log("Successfully retrieved number of comments"), data = res.size},
+          onError: (e) => log("Error completing: $e"),
+        );
+    return data;
+  }
+
   static Future<void> createInventoryCheckRequestDocument(
       InventoryCheckRequest inventoryCheckRequest) async {
     if (!InventoryCheckRequest.fieldsArentEmpty(inventoryCheckRequest)) {
@@ -89,7 +100,7 @@ class DbService {
 
     CollectionReference<InventoryCheckRequest> ref =
         InventoryCheckRequest.getDocumentReference();
-    await ref.doc().set(inventoryCheckRequest);
+    await ref.doc(inventoryCheckRequest.id).set(inventoryCheckRequest);
     log("property inventory check request document created");
   }
 
@@ -137,7 +148,10 @@ class DbService {
     List<QueryDocumentSnapshot<Property>> properties = [];
     await getOwnedProperties(ownerId).then((value) => properties = value ?? []);
 
+    if (properties.isEmpty) return null;
+
     List<String> propertyIds = [];
+
     for (int i = 0; i < properties.length; i++) {
       propertyIds.add(properties[i].data().propertyId!);
     }
@@ -275,5 +289,17 @@ class DbService {
       await db.collection("inventory_check_contents").doc("test").set(docData);
     }
     log("Inventory check created");
+  }
+
+  static Future<void> setInventoryCheckRequestCompleted(InventoryCheckRequest inventoryCheckRequest) async {
+    final ref =
+        db.collection("inventoryCheckRequests").doc(inventoryCheckRequest.id);
+    await ref.update({"complete":true});
+  }
+
+  static Future<List<QueryDocumentSnapshot<InventoryCheckRequest>>> getInventoryCheckRequestsForProperty(String propertyId) async {
+    final ref = InventoryCheckRequest.getDocumentReference();
+    final data = await ref.where("propertyId", isEqualTo: propertyId).where("complete", isEqualTo: false).get();
+    return data.docs;
   }
 }

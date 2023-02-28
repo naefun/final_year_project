@@ -63,7 +63,8 @@ class _InventoryCheckSubSectionAreaState
                 : ""),
           ),
           showComments==false?SizedBox():SubsectionCommentSection(
-              inventoryCheckSubsectionId: widget.inventoryCheckInputArea.id!),
+              inventoryCheckSubsectionId: widget.inventoryCheckInputArea.id!,
+              inventoryCheckId: widget.inventoryCheckInputArea.inventoryCheckId!,),
         ]),
       ),
     ));

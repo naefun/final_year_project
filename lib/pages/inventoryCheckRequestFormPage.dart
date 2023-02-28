@@ -90,7 +90,6 @@ class _InventoryCheckRequestFormPageState
     }
 
     if (inventoryCheckRequest == null ||
-        tenantId == null ||
         landlordId == null ||
         address == null ||
         daysUntilInventoryCheck == null ||
@@ -381,5 +380,6 @@ class _InventoryCheckRequestFormPageState
         checkCompletedDate: DateTime.now().toString());
 
     DbService.submitInventoryCheck(inventoryCheck);
+    DbService.setInventoryCheckRequestCompleted(inventoryCheckRequest!);
   }
 }

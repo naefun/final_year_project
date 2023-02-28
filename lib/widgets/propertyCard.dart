@@ -1,11 +1,15 @@
 import 'dart:developer';
 import 'dart:typed_data';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
+import 'package:test_flutter_app/models/inventoryCheck.dart';
+import 'package:test_flutter_app/models/inventoryCheckRequest.dart';
 import 'package:test_flutter_app/models/property.dart';
 import 'package:test_flutter_app/pages/propertyPage.dart';
 import 'package:test_flutter_app/services/cloudStorageService.dart';
+import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/utilities/date_utilities.dart';
 
 class PropertyCard extends StatefulWidget {
@@ -19,6 +23,7 @@ class PropertyCard extends StatefulWidget {
 class _PropertyCardState extends State<PropertyCard> {
   Uint8List? imageData;
   Property? propertyData;
+  String? inventoryCheckDueDate;
 
   @override
   Widget build(BuildContext context) {
@@ -33,9 +38,7 @@ class _PropertyCardState extends State<PropertyCard> {
         imageData == null) {
       setPropertyImageUrl(propertyData!.propertyImageName!);
     }
-    propertyData != null
-        ? log(propertyData!.nextInventoryCheck!)
-        : log("No property data");
+    if(propertyData!=null && inventoryCheckDueDate==null) getInventoryCheckDueDate();
     return GestureDetector(
       onTap: () => {navigateToPropertyPage()},
       child: Card(
@@ -74,14 +77,9 @@ class _PropertyCardState extends State<PropertyCard> {
                         const SizedBox(height: 10.0),
                         Row(
                           children: [
-                            const Icon(Icons.add_home),
+                            const Icon(Icons.add_home, color: Color(0xFF636363),),
                             const SizedBox(width: 10.0),
-                            Text(propertyData != null &&
-                                    propertyData!.nextInventoryCheck != null &&
-                                    DateUtilities.validDate(
-                                        propertyData!.nextInventoryCheck!)
-                                ? "${DateUtilities.dateStringToDaysRemaining(DateTime.now(), propertyData!.nextInventoryCheck!).toString()} days to go"
-                                : "No check pending"),
+                            Text(inventoryCheckDueDate!=null?inventoryCheckDueDate!:"No check due"),
                           ],
                         ),
                         const SizedBox(height: 10.0),
@@ -141,5 +139,24 @@ class _PropertyCardState extends State<PropertyCard> {
         screen: PropertyPage(
           property: propertyData,
         ));
+  }
+  
+  Future<void> getInventoryCheckDueDate() async {
+    List<QueryDocumentSnapshot<InventoryCheckRequest>> docs = [];
+    List<InventoryCheckRequest> icrs = [];
+
+    await DbService.getInventoryCheckRequestsForProperty(propertyData!.propertyId!).then((value) => docs=value);
+
+    for (QueryDocumentSnapshot<InventoryCheckRequest> element in docs) {
+      icrs.add(element.data());
+    }
+
+    icrs.sort((a, b) => a.checkDate!.compareTo(b.checkDate!));
+
+    if(icrs.isNotEmpty){
+      setState(() {
+        inventoryCheckDueDate=icrs[0].checkDate;
+      });
+    }
   }
 }

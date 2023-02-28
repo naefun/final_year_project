@@ -97,7 +97,7 @@ class _InventoryCheckCardOldState extends State<InventoryCheckCardOld> {
           PersistentNavBarNavigator.pushNewScreen(context,
               screen: InventoryCheckRequestFormPage(
                 inventoryCheckRequest: widget.inventoryCheckRequest!,
-                tenantId: icrProperty!.tenantId!,
+                tenantId: icrProperty!.tenantId,
                 landlordId: icrProperty!.ownerId!,
                 address: propertyAddress,
                 daysUntilInventoryCheck: daysUntilCheck,

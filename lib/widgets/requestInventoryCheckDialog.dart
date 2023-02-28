@@ -5,6 +5,7 @@ import 'package:test_flutter_app/models/inventoryCheckRequest.dart';
 import 'package:test_flutter_app/models/property.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/services/validator.dart';
+import 'package:uuid/uuid.dart';
 
 class RequestInventoryCheckDialog extends StatefulWidget {
   RequestInventoryCheckDialog({super.key, this.property});
@@ -169,10 +170,12 @@ class _RequestInventoryCheckDialogState
                                   propertyId = widget.property!.propertyId;
                                   InventoryCheckRequest icr =
                                       InventoryCheckRequest(
+                                          id: Uuid().v4(),
                                           type: _selectedType,
                                           clerkEmail: _emailTextController.text,
                                           checkDate: _dateTextController.text,
-                                          propertyId: propertyId);
+                                          propertyId: propertyId,
+                                          complete: false);
                                   DbService.createInventoryCheckRequestDocument(
                                       icr);
                                   Navigator.pop(context);

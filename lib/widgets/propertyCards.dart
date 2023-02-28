@@ -35,7 +35,7 @@ class _PropertyCardsState extends State<PropertyCards> {
                     ? properties!.length
                     : widget.numberOfCards,
                 properties!)!
-            : [Text("data")]);
+            : [Text("You have no properties")]);
   }
 
   void getPropertyData(String userId) async {
@@ -65,7 +65,7 @@ class PropertyCardHelper {
   static List<PropertyCard>? getPropertyCards(
       int numberOfCards, List<Property> propertyData) {
     if (propertyData.isEmpty) {
-      return null;
+      return [];
     }
     List<PropertyCard> propertyCards = [];
     for (var i = 0; i < numberOfCards; i++) {
