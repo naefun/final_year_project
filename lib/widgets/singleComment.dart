@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:test_flutter_app/models/comment.dart';
 import 'package:test_flutter_app/services/dbService.dart';
+import 'package:test_flutter_app/services/fireAuth.dart';
 
 import '../models/user.dart';
 
@@ -22,7 +23,8 @@ class _SingleCommentState extends State<SingleComment> {
   @override
   Widget build(BuildContext context) {
     if (commentAuthor == null) getCommentAuthor();
-    if(timestamp==null) setTimestamp();
+    if (timestamp == null) setTimestamp();
+    markCommentAsSeen();
 
     return Column(
       crossAxisAlignment: commentAuthor != null && commentAuthor!.userType! == 2
@@ -36,7 +38,9 @@ class _SingleCommentState extends State<SingleComment> {
                   : MainAxisAlignment.end,
           children: [
             Text(
-              timestamp!=null?"${timestamp!.day}/${timestamp!.month}/${timestamp!.year} - ${timestamp!.hour}:${timestamp!.minute}":"",
+              timestamp != null
+                  ? "${timestamp!.day}/${timestamp!.month}/${timestamp!.year} - ${timestamp!.hour}:${timestamp!.minute}"
+                  : "",
               style: TextStyle(fontSize: 12),
             )
           ],
@@ -72,16 +76,32 @@ class _SingleCommentState extends State<SingleComment> {
 
     log(user!.firstName!);
   }
-  
+
   void setTimestamp() {
     DateTime? tempTimestamp;
 
     tempTimestamp = DateTime.tryParse(widget.comment.timestamp!);
 
-    if(tempTimestamp!=null){
+    if (tempTimestamp != null) {
       setState(() {
-        timestamp=tempTimestamp;
+        timestamp = tempTimestamp;
       });
+    }
+  }
+
+  void markCommentAsSeen() async {
+    User? currentUser;
+
+    await DbService.getUserDocument(FireAuth.getCurrentUser()!.uid)
+        .then((value) => currentUser = value);
+
+    if (currentUser != null &&
+            (currentUser!.userType == 1 &&
+                widget.comment.seenByLandlord == false) ||
+        (currentUser!.userType == 2 && widget.comment.seenByTenant == false)) {
+      // update the comment by setting it as seen by the landlord
+      await DbService.setCommentAsSeen(
+          currentUser!.userType!, widget.comment.id!);
     }
   }
 }

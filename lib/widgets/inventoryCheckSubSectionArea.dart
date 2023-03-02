@@ -1,5 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:test_flutter_app/models/comment.dart';
 import 'package:test_flutter_app/models/inventoryCheckInputArea.dart';
+import 'package:test_flutter_app/services/dbService.dart';
+import 'package:test_flutter_app/services/fireAuth.dart';
 import 'package:test_flutter_app/widgets/subsectionCommentSection.dart';
 
 class InventoryCheckSubSectionArea extends StatefulWidget {
@@ -16,11 +20,19 @@ class InventoryCheckSubSectionArea extends StatefulWidget {
 
 class _InventoryCheckSubSectionAreaState
     extends State<InventoryCheckSubSectionArea> {
-
-    bool showComments = false;
+  bool showComments = false;
+  bool? newCommentsAvailable;
+  int? numberOfComments;
+  List<Comment>? subsectionComments;
 
   @override
   Widget build(BuildContext context) {
+    if (subsectionComments == null) getSubsectionComments();
+    if (subsectionComments != null && numberOfComments == null)
+      setNumberOfComments();
+    if (subsectionComments != null && newCommentsAvailable == null)
+      setNewCommentsAvailable();
+
     return Container(
         child: Card(
       color: Color(0xFFEDEDED),
@@ -45,9 +57,20 @@ class _InventoryCheckSubSectionAreaState
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    Text(numberOfComments != null
+                        ? numberOfComments.toString()
+                        : "0"),
                     IconButton(
-                      onPressed: () {toggleCommentsVisibility();},
-                      icon: Icon(Icons.comment),
+                      onPressed: () {
+                        toggleCommentsVisibility();
+                      },
+                      icon: Icon(
+                        Icons.comment,
+                        color: newCommentsAvailable != null &&
+                                newCommentsAvailable == true
+                            ? Color.fromARGB(255, 205, 83, 83)
+                            : Color(0xFF636363),
+                      ),
                       iconSize: 20,
                       padding: EdgeInsets.all(0),
                     ),
@@ -62,17 +85,72 @@ class _InventoryCheckSubSectionAreaState
                 ? widget.inventoryCheckInputArea.details!
                 : ""),
           ),
-          showComments==false?SizedBox():SubsectionCommentSection(
-              inventoryCheckSubsectionId: widget.inventoryCheckInputArea.id!,
-              inventoryCheckId: widget.inventoryCheckInputArea.inventoryCheckId!,),
+          showComments == false
+              ? SizedBox()
+              : SubsectionCommentSection(
+                  inventoryCheckSubsectionId:
+                      widget.inventoryCheckInputArea.id!,
+                  inventoryCheckId:
+                      widget.inventoryCheckInputArea.inventoryCheckId!,
+                ),
         ]),
       ),
     ));
   }
 
-  void toggleCommentsVisibility(){
+  void toggleCommentsVisibility() {
     setState(() {
       showComments = !showComments;
+    });
+  }
+
+  void setNumberOfComments() async {
+    setState(() {
+      numberOfComments =
+          subsectionComments != null ? subsectionComments!.length : 0;
+    });
+  }
+
+  void getSubsectionComments() async {
+    List<QueryDocumentSnapshot<Comment>>? subsectionCommentsQueryDocSnap;
+    List<Comment> tempSubsectionComments = [];
+
+    await DbService.getCommentsForSubsection(widget.inventoryCheckInputArea.id!)
+        .then((value) {
+      subsectionCommentsQueryDocSnap = value ?? [];
+    });
+
+    if (subsectionCommentsQueryDocSnap != null) {
+      for (QueryDocumentSnapshot<Comment> element
+          in subsectionCommentsQueryDocSnap!) {
+        tempSubsectionComments.add(element.data());
+      }
+    }
+
+    setState(() {
+      subsectionComments = tempSubsectionComments;
+    });
+  }
+
+  void setNewCommentsAvailable() async {
+    int? userType;
+    bool tempNewCommentsAvailable = false;
+
+    await DbService.getUserDocument(FireAuth.getCurrentUser()!.uid)
+        .then((value) => userType = value?.userType);
+
+    if (userType != null) {
+      for (Comment element in subsectionComments!) {
+        if ((userType == 1 && element.seenByLandlord == false) ||
+            (userType == 2 && element.seenByTenant == false)) {
+          tempNewCommentsAvailable = true;
+          break;
+        }
+      }
+    }
+
+    setState(() {
+      newCommentsAvailable = tempNewCommentsAvailable;
     });
   }
 }

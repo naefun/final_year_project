@@ -8,8 +8,18 @@ class Comment {
   final String? commentContent;
   final String? timestamp;
   final String? subsectionId;
+  final bool? seenByTenant;
+  final bool? seenByLandlord;
 
-  Comment({this.id, this.userId, this.inventoryCheckId, this.commentContent, this.timestamp, this.subsectionId});
+  Comment(
+      {this.id,
+      this.userId,
+      this.inventoryCheckId,
+      this.commentContent,
+      this.timestamp,
+      this.subsectionId,
+      this.seenByTenant,
+      this.seenByLandlord});
 
   factory Comment.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
@@ -23,6 +33,8 @@ class Comment {
       commentContent: data?['commentContent'],
       timestamp: data?['timestamp'],
       subsectionId: data?['subsectionId'],
+      seenByTenant: data?['seenByTenant'],
+      seenByLandlord: data?['seenByLandlord'],
     );
   }
 
@@ -34,16 +46,19 @@ class Comment {
       if (commentContent != null) "commentContent": commentContent,
       if (timestamp != null) "timestamp": timestamp,
       if (subsectionId != null) "subsectionId": subsectionId,
+      if (seenByTenant != null) "seenByTenant": seenByTenant,
+      if (seenByLandlord != null) "seenByLandlord": seenByLandlord,
     };
   }
 
-  static CollectionReference<Comment> getDocumentReference(){
+  static CollectionReference<Comment> getDocumentReference() {
     FirebaseFirestore db = DbService.getDbInstance();
 
-    final CollectionReference<Comment> ref = db.collection("comments").withConverter(
-      fromFirestore: Comment.fromFirestore,
-      toFirestore: (Comment comment, _) => comment.toFirestore(),
-    );
+    final CollectionReference<Comment> ref =
+        db.collection("comments").withConverter(
+              fromFirestore: Comment.fromFirestore,
+              toFirestore: (Comment comment, _) => comment.toFirestore(),
+            );
 
     return ref;
   }

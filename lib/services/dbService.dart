@@ -69,11 +69,22 @@ class DbService {
     log("Comment document created");
   }
 
-  static Future<List<QueryDocumentSnapshot<Comment>>?> getComments(
+  static Future<List<QueryDocumentSnapshot<Comment>>?> getCommentsForSubsection(
       String subsectionId) async {
     QuerySnapshot<Comment>? data;
     CollectionReference<Comment> ref = Comment.getDocumentReference();
     await ref.where("subsectionId", isEqualTo: subsectionId).get().then(
+          (res) => {log("Successfully retrieved comments"), data = res},
+          onError: (e) => log("Error completing: $e"),
+        );
+    return data?.docs;
+  }
+
+  static Future<List<QueryDocumentSnapshot<Comment>>?>
+      getCommentsForInventoryCheck(String inventoryCheckId) async {
+    QuerySnapshot<Comment>? data;
+    CollectionReference<Comment> ref = Comment.getDocumentReference();
+    await ref.where("inventoryCheckId", isEqualTo: inventoryCheckId).get().then(
           (res) => {log("Successfully retrieved comments"), data = res},
           onError: (e) => log("Error completing: $e"),
         );
@@ -85,7 +96,10 @@ class DbService {
     int data = 0;
     CollectionReference<Comment> ref = Comment.getDocumentReference();
     await ref.where("inventoryCheckId", isEqualTo: inventoryCheckId).get().then(
-          (res) => {log("Successfully retrieved number of comments"), data = res.size},
+          (res) => {
+            log("Successfully retrieved number of comments"),
+            data = res.size
+          },
           onError: (e) => log("Error completing: $e"),
         );
     return data;
@@ -291,15 +305,44 @@ class DbService {
     log("Inventory check created");
   }
 
-  static Future<void> setInventoryCheckRequestCompleted(InventoryCheckRequest inventoryCheckRequest) async {
+  static Future<void> setInventoryCheckRequestCompleted(
+      InventoryCheckRequest inventoryCheckRequest) async {
     final ref =
         db.collection("inventoryCheckRequests").doc(inventoryCheckRequest.id);
-    await ref.update({"complete":true});
+    await ref.update({"complete": true});
   }
 
-  static Future<List<QueryDocumentSnapshot<InventoryCheckRequest>>> getInventoryCheckRequestsForProperty(String propertyId) async {
+  static Future<void> setCommentAsSeen(int userType, String commentId) async {
+    String commentDocumentId = "";
+
+    await db
+        .collection("comments")
+        .where("id", isEqualTo: commentId)
+        .get()
+        .then((value) {
+      commentDocumentId = value.docs.first.id;
+    });
+
+    if (userType == 1) {
+      await db
+          .collection("comments")
+          .doc(commentDocumentId)
+          .update({"seenByLandlord": true});
+    } else if (userType == 2) {
+      await db
+          .collection("comments")
+          .doc(commentDocumentId)
+          .update({"seenByTenant": true});
+    }
+  }
+
+  static Future<List<QueryDocumentSnapshot<InventoryCheckRequest>>>
+      getInventoryCheckRequestsForProperty(String propertyId) async {
     final ref = InventoryCheckRequest.getDocumentReference();
-    final data = await ref.where("propertyId", isEqualTo: propertyId).where("complete", isEqualTo: false).get();
+    final data = await ref
+        .where("propertyId", isEqualTo: propertyId)
+        .where("complete", isEqualTo: false)
+        .get();
     return data.docs;
   }
 }

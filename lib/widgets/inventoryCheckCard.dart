@@ -1,11 +1,14 @@
 import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
+import 'package:test_flutter_app/models/comment.dart';
 import 'package:test_flutter_app/models/inventoryCheck.dart';
 import 'package:test_flutter_app/models/inventoryCheckOld.dart';
 import 'package:test_flutter_app/models/inventoryCheckRequest.dart';
 import 'package:test_flutter_app/models/property.dart';
+import 'package:test_flutter_app/models/user.dart';
 import 'package:test_flutter_app/pages/inventoryCheckPage.dart';
 import 'package:test_flutter_app/pages/inventoryCheckRequestFormPage.dart';
 import 'package:test_flutter_app/services/dbService.dart';
@@ -32,17 +35,17 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
   Property? property;
   int? commentsSize;
   int? daysSinceCheck;
+  bool? newComments;
 
   @override
   Widget build(BuildContext context) {
-    if (widget.inventoryCheck != null) {
-      if (commentsSize == null) getNumberOfComments();
-      if (property == null) getProperty();
-      if (checkIn == null) setInventoryCheckType();
-      if (cardAccentColour == null) setCardAccentColor();
-      if (daysSinceCheck == null) setDaysSinceCheck();
-      if (clerkName == null) getClerkName();
-    }
+    if (commentsSize == null) getNumberOfComments();
+    if (property == null) getProperty();
+    if (checkIn == null) setInventoryCheckType();
+    if (cardAccentColour == null) setCardAccentColor();
+    if (daysSinceCheck == null) setDaysSinceCheck();
+    if (clerkName == null) getClerkName();
+    if (newComments == null) checkForNewComments();
 
     return GestureDetector(
       onTap: () {
@@ -83,8 +86,8 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
                       child: Row(
                         children: [
                           Image(
-                            image: AssetImage(commentsSize != null &&
-                                    commentsSize! > 0
+                            image: AssetImage(newComments != null &&
+                                    newComments! == true
                                 ? IconPaths.commentWithNotificationIconPath.path
                                 : IconPaths.commentIconPath.path),
                             width: 28,
@@ -257,6 +260,33 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
       setState(() {
         clerkName = "${value!.firstName} ${value.lastName}";
       });
+    });
+  }
+
+  void checkForNewComments() async {
+    List<QueryDocumentSnapshot<Comment>>? comments;
+    User? currentUser;
+    await DbService.getCommentsForInventoryCheck(widget.inventoryCheck.id!)
+        .then((value) => comments = value);
+    await DbService.getUserDocument(FireAuth.getCurrentUser()!.uid)
+        .then((value) => currentUser = value);
+
+    bool newCommentsExist = false;
+
+    if (comments != null && currentUser != null) {
+      for (QueryDocumentSnapshot<Comment> element in comments!) {
+        if ((currentUser!.userType == 1 &&
+                element.data().seenByLandlord == false) ||
+            (currentUser!.userType == 2 &&
+                element.data().seenByTenant == false)) {
+          newCommentsExist = true;
+          break;
+        }
+      }
+    }
+
+    setState(() {
+      newComments = newCommentsExist;
     });
   }
 }

@@ -3,13 +3,18 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:test_flutter_app/models/comment.dart';
+import 'package:test_flutter_app/models/user.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/services/fireAuth.dart';
+import 'package:test_flutter_app/utilities/user_utilities.dart';
 import 'package:test_flutter_app/widgets/singleComment.dart';
 import 'package:uuid/uuid.dart';
 
 class SubsectionCommentSection extends StatefulWidget {
-  SubsectionCommentSection({Key? key, required this.inventoryCheckSubsectionId, required this.inventoryCheckId})
+  SubsectionCommentSection(
+      {Key? key,
+      required this.inventoryCheckSubsectionId,
+      required this.inventoryCheckId})
       : super(key: key);
 
   String inventoryCheckSubsectionId;
@@ -112,13 +117,18 @@ class _SubsectionCommentSectionState extends State<SubsectionCommentSection> {
   void submitComment() async {
     String message = _controllerCommentInput.text;
 
+    int userType = 0;
+    await getUserType().then((value) => userType=value);
+
     Comment newComment = Comment(
         id: Uuid().v4(),
         userId: FireAuth.getCurrentUser()!.uid,
         inventoryCheckId: widget.inventoryCheckId,
         commentContent: message,
         timestamp: DateTime.now().toString(),
-        subsectionId: widget.inventoryCheckSubsectionId);
+        subsectionId: widget.inventoryCheckSubsectionId,
+        seenByLandlord: userType==1?true:false,
+        seenByTenant: userType==2?true:false);
 
     List<Comment> tempComments = comments!;
     tempComments.add(newComment);
@@ -149,7 +159,7 @@ class _SubsectionCommentSectionState extends State<SubsectionCommentSection> {
     List<QueryDocumentSnapshot<Comment>>? commentDocuments;
     List<Comment> tempComments = [];
 
-    await DbService.getComments(widget.inventoryCheckSubsectionId)
+    await DbService.getCommentsForSubsection(widget.inventoryCheckSubsectionId)
         .then((value) => commentDocuments = value);
 
     if (commentDocuments != null && commentDocuments!.isNotEmpty) {
@@ -158,7 +168,8 @@ class _SubsectionCommentSectionState extends State<SubsectionCommentSection> {
       }
     }
 
-    tempComments.sort((a, b) => DateTime.parse(a.timestamp!).compareTo(DateTime.parse(b.timestamp!)));
+    tempComments.sort((a, b) =>
+        DateTime.parse(a.timestamp!).compareTo(DateTime.parse(b.timestamp!)));
 
     setState(() {
       comments = tempComments;
@@ -169,5 +180,18 @@ class _SubsectionCommentSectionState extends State<SubsectionCommentSection> {
     setState(() {
       commentWidgets = null;
     });
+  }
+
+  Future<int> getUserType() async {
+    int userType = 0;
+
+    await DbService.getUserDocument(FireAuth.getCurrentUser()!.uid)
+        .then((value) {
+      if (value != null) {
+        userType = value.userType!;
+      }
+    });
+
+    return userType;
   }
 }
