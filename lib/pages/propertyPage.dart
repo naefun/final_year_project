@@ -2,8 +2,10 @@ import 'dart:developer';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 import 'package:test_flutter_app/models/property.dart';
 import 'package:test_flutter_app/models/user.dart';
+import 'package:test_flutter_app/pages/editPropertyPage.dart';
 import 'package:test_flutter_app/services/cloudStorageService.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/utilities/global_values.dart';
@@ -13,7 +15,7 @@ import 'package:test_flutter_app/widgets/requestInventoryCheckDialog.dart';
 import 'package:test_flutter_app/widgets/simpleButton.dart';
 import 'package:test_flutter_app/widgets/wideInventoryCheckCard.dart';
 
-enum SampleItem { itemOne, itemTwo, itemThree }
+enum MenuItem { edit, itemTwo, itemThree }
 
 class PropertyPage extends StatefulWidget {
   PropertyPage({Key? key, this.property}) : super(key: key);
@@ -30,7 +32,7 @@ class _PropertyPageState extends State<PropertyPage> {
   User? landlordDetails;
   User? tenantDetails;
 
-  SampleItem? selectedMenu;
+  MenuItem? selectedMenu;
   String? dropdownValue;
 
   @override
@@ -47,9 +49,6 @@ class _PropertyPageState extends State<PropertyPage> {
         landlordDetails == null) {
       getLandlordDetails(property!.ownerId!);
     }
-    // if(property!=null && property!.tenantEmail!=null && tenantDetails==null){
-    //   getTenantDetails(property!.tenantEmail!);
-    // }
 
     return Scaffold(
       appBar: CustomAppBar(),
@@ -59,27 +58,39 @@ class _PropertyPageState extends State<PropertyPage> {
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                PopupMenuButton<SampleItem>(
+                PopupMenuButton<MenuItem>(
                   padding: const EdgeInsets.all(0),
                   initialValue: selectedMenu,
                   // Callback that sets the selected popup menu item.
-                  onSelected: (SampleItem item) {
+                  onSelected: (MenuItem item) {
+                    switch (item) {
+                      case MenuItem.edit:
+                        log("edit selected");
+                        if (property != null && propertyImage != null) {
+                          PersistentNavBarNavigator.pushNewScreen(context,
+                              screen: EditPropertyPage(
+                                  property: property!,
+                                  propertyImage: propertyImage!));
+                        }
+                        break;
+                      default:
+                    }
                     setState(() {
                       selectedMenu = item;
                     });
                   },
                   itemBuilder: (BuildContext context) =>
-                      <PopupMenuEntry<SampleItem>>[
-                    const PopupMenuItem<SampleItem>(
-                      value: SampleItem.itemOne,
-                      child: Text('Item 1'),
+                      <PopupMenuEntry<MenuItem>>[
+                    const PopupMenuItem<MenuItem>(
+                      value: MenuItem.edit,
+                      child: Text('Edit'),
                     ),
-                    const PopupMenuItem<SampleItem>(
-                      value: SampleItem.itemTwo,
+                    const PopupMenuItem<MenuItem>(
+                      value: MenuItem.itemTwo,
                       child: Text('Item 2'),
                     ),
-                    const PopupMenuItem<SampleItem>(
-                      value: SampleItem.itemThree,
+                    const PopupMenuItem<MenuItem>(
+                      value: MenuItem.itemThree,
                       child: Text('Item 3'),
                     ),
                   ],
@@ -90,6 +101,10 @@ class _PropertyPageState extends State<PropertyPage> {
                 landlordDetails: landlordDetails,
                 tenantDetails: tenantDetails,
                 propertyAddress: propertyAddress(),
+                tenantEmail: widget.property!.tenantId != null &&
+                        widget.property!.tenantId!.isNotEmpty
+                    ? widget.property!.tenantId!
+                    : null,
               ),
               const SizedBox(height: 50.0),
               Flex(
@@ -108,7 +123,7 @@ class _PropertyPageState extends State<PropertyPage> {
                                 property: property,
                               )),
                       icon: Icon(Icons.add),
-                      label: Text("Request"),
+                      label: Text("Request inventory check"),
                       style: ElevatedButton.styleFrom(
                           padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap))

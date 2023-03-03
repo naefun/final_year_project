@@ -345,4 +345,15 @@ class DbService {
         .get();
     return data.docs;
   }
+
+  static Future<void> updateProperty(Property property) async {
+    final ref = Property.getDocumentReference().doc(property.propertyId);
+    await ref.update({
+      "addressHouseNameOrNumber": property.addressHouseNameOrNumber,
+      "addressRoadName": property.addressRoadName,
+      "addressCity": property.addressCity,
+      "addressPostcode": property.addressPostcode,
+      "tenantId": property.tenantId,
+    });
+  }
 }
