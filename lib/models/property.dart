@@ -98,4 +98,8 @@ class Property implements Comparable{
     }
 
   }
+
+  String getPropertyAddress(){
+    return "$addressHouseNameOrNumber $addressRoadName, $addressCity, $addressPostcode";
+  }
 }

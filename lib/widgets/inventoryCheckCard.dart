@@ -13,8 +13,10 @@ import 'package:test_flutter_app/pages/inventoryCheckPage.dart';
 import 'package:test_flutter_app/pages/inventoryCheckRequestFormPage.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/services/fireAuth.dart';
+import 'package:test_flutter_app/utilities/comment_utilities.dart';
 import 'package:test_flutter_app/utilities/date_utilities.dart';
 import 'package:test_flutter_app/utilities/global_values.dart';
+import 'package:test_flutter_app/widgets/commentNotificationIcon.dart';
 
 class InventoryCheckCard extends StatefulWidget {
   InventoryCheck inventoryCheck;
@@ -35,7 +37,6 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
   Property? property;
   int? commentsSize;
   int? daysSinceCheck;
-  bool? newComments;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +46,6 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
     if (cardAccentColour == null) setCardAccentColor();
     if (daysSinceCheck == null) setDaysSinceCheck();
     if (clerkName == null) getClerkName();
-    if (newComments == null) checkForNewComments();
 
     return GestureDetector(
       onTap: () {
@@ -85,14 +85,7 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
                       flex: 1,
                       child: Row(
                         children: [
-                          Image(
-                            image: AssetImage(newComments != null &&
-                                    newComments! == true
-                                ? IconPaths.commentWithNotificationIconPath.path
-                                : IconPaths.commentIconPath.path),
-                            width: 28,
-                            height: 28,
-                          ),
+                          CommenNotificationIcon(inventoryCheck: widget.inventoryCheck),
                           const SizedBox(
                             width: 5,
                           ),
@@ -260,33 +253,6 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
       setState(() {
         clerkName = "${value!.firstName} ${value.lastName}";
       });
-    });
-  }
-
-  void checkForNewComments() async {
-    List<QueryDocumentSnapshot<Comment>>? comments;
-    User? currentUser;
-    await DbService.getCommentsForInventoryCheck(widget.inventoryCheck.id!)
-        .then((value) => comments = value);
-    await DbService.getUserDocument(FireAuth.getCurrentUser()!.uid)
-        .then((value) => currentUser = value);
-
-    bool newCommentsExist = false;
-
-    if (comments != null && currentUser != null) {
-      for (QueryDocumentSnapshot<Comment> element in comments!) {
-        if ((currentUser!.userType == 1 &&
-                element.data().seenByLandlord == false) ||
-            (currentUser!.userType == 2 &&
-                element.data().seenByTenant == false)) {
-          newCommentsExist = true;
-          break;
-        }
-      }
-    }
-
-    setState(() {
-      newComments = newCommentsExist;
     });
   }
 }

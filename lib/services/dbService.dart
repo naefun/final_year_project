@@ -183,6 +183,21 @@ class DbService {
     return data?.docs;
   }
 
+  static Future<List<QueryDocumentSnapshot<InventoryCheck>>?>
+      getInventoryChecksForProperty(String propertyId) async {
+    QuerySnapshot<InventoryCheck>? data;
+    CollectionReference<InventoryCheck> ref =
+        InventoryCheck.getDocumentReference();
+    await ref.where("propertyId", isEqualTo: propertyId).get().then(
+          (res) => {
+            log("Successfully completed for property: $propertyId ${res.size}"),
+            data = res
+          },
+          onError: (e) => log("Error completing: $e"),
+        );
+    return data?.docs;
+  }
+
   static Future<List<QueryDocumentSnapshot<InventoryCheckSection>>?>
       getInventoryCheckSections(String inventoryCheckId) async {
     QuerySnapshot<InventoryCheckSection>? data;

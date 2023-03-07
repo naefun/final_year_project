@@ -1,15 +1,20 @@
 import 'dart:developer';
 import 'dart:typed_data';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
+import 'package:test_flutter_app/models/inventoryCheck.dart';
+import 'package:test_flutter_app/models/inventoryCheckRequest.dart';
 import 'package:test_flutter_app/models/property.dart';
 import 'package:test_flutter_app/models/user.dart';
 import 'package:test_flutter_app/pages/editPropertyPage.dart';
 import 'package:test_flutter_app/services/cloudStorageService.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/utilities/global_values.dart';
+import 'package:test_flutter_app/utilities/themeColors.dart';
 import 'package:test_flutter_app/widgets/customAppBar.dart';
+import 'package:test_flutter_app/widgets/inventoryCheckHelp.dart';
 import 'package:test_flutter_app/widgets/propertyImageAndInfo.dart';
 import 'package:test_flutter_app/widgets/requestInventoryCheckDialog.dart';
 import 'package:test_flutter_app/widgets/simpleButton.dart';
@@ -26,7 +31,7 @@ class PropertyPage extends StatefulWidget {
   _PropertyPageState createState() => _PropertyPageState();
 }
 
-class _PropertyPageState extends State<PropertyPage> {
+class _PropertyPageState extends State<PropertyPage> with SingleTickerProviderStateMixin {
   Property? property;
   Uint8List? propertyImage;
   User? landlordDetails;
@@ -34,6 +39,10 @@ class _PropertyPageState extends State<PropertyPage> {
 
   MenuItem? selectedMenu;
   String? dropdownValue;
+
+  List<InventoryCheck>? inventoryChecks;
+  List<InventoryCheckRequest>? inventoryCheckRequests;
+  List<WideInventoryCheckCard>? inventoryCheckCards;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +58,13 @@ class _PropertyPageState extends State<PropertyPage> {
         landlordDetails == null) {
       getLandlordDetails(property!.ownerId!);
     }
+
+    if (property != null && inventoryChecks == null) getInventoryChecks();
+    if (property != null && inventoryCheckRequests == null)
+      getInventoryCheckRequests();
+    if (inventoryChecks != null &&
+        inventoryCheckRequests != null &&
+        inventoryCheckCards == null) setInventoryCheckCards();
 
     return Scaffold(
       appBar: CustomAppBar(),
@@ -87,7 +103,7 @@ class _PropertyPageState extends State<PropertyPage> {
                     ),
                     const PopupMenuItem<MenuItem>(
                       value: MenuItem.itemTwo,
-                      child: Text('Item 2'),
+                      child: Text('Move tenant in'),
                     ),
                     const PopupMenuItem<MenuItem>(
                       value: MenuItem.itemThree,
@@ -111,9 +127,14 @@ class _PropertyPageState extends State<PropertyPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 direction: Axis.horizontal,
                 children: [
-                  const Text(
-                    "Inventory checks",
-                    style: TextStyle(fontSize: 16),
+                  Row(
+                    children: [
+                      const Text(
+                        "Inventory checks",
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      InventoryCheckHelp()
+                    ],
                   ),
                   ElevatedButton.icon(
                       onPressed: () => showDialog<String>(
@@ -123,7 +144,7 @@ class _PropertyPageState extends State<PropertyPage> {
                                 property: property,
                               )),
                       icon: Icon(Icons.add),
-                      label: Text("Request inventory check"),
+                      label: Text("Request"),
                       style: ElevatedButton.styleFrom(
                           padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap))
@@ -262,14 +283,15 @@ class _PropertyPageState extends State<PropertyPage> {
               SizedBox(
                 height: 25,
               ),
-              Container(
-                child: Column(children: [
-                  WideInventoryCheckCard(),
-                  WideInventoryCheckCard(),
-                  WideInventoryCheckCard(),
-                  WideInventoryCheckCard(),
-                ]),
-              )
+              inventoryCheckCards != null
+                  ? ListView.builder(
+                      physics: NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: inventoryCheckCards!.length,
+                      itemBuilder: (BuildContext context, int index) =>
+                          inventoryCheckCards![index],
+                    )
+                  : SizedBox()
             ]),
           )),
     );
@@ -333,5 +355,59 @@ class _PropertyPageState extends State<PropertyPage> {
     }
 
     return "No address given";
+  }
+
+  void getInventoryChecks() async {
+    List<InventoryCheck> tempInventoryChecks = [];
+
+    await DbService.getInventoryChecksForProperty(property!.propertyId!)
+        .then((value) {
+      if (value != null) {
+        for (QueryDocumentSnapshot<InventoryCheck> element in value) {
+          tempInventoryChecks.add(element.data());
+        }
+      }
+    });
+
+    setState(() {
+      inventoryChecks = tempInventoryChecks;
+    });
+  }
+
+  void getInventoryCheckRequests() async {
+    List<InventoryCheckRequest> tempInventoryCheckRequests = [];
+
+    await DbService.getInventoryCheckRequestsForProperty(property!.propertyId!)
+        .then((value) {
+      for (QueryDocumentSnapshot<InventoryCheckRequest> element in value) {
+        tempInventoryCheckRequests.add(element.data());
+      }
+    });
+
+    setState(() {
+      inventoryCheckRequests = tempInventoryCheckRequests;
+    });
+  }
+
+  void setInventoryCheckCards() {
+    List<WideInventoryCheckCard> tempInventoryCheckCards = [];
+
+    for (InventoryCheck inventoryCheck in inventoryChecks!) {
+      tempInventoryCheckCards.add(WideInventoryCheckCard(
+        inventoryCheck: inventoryCheck,
+      ));
+      log("added inv check");
+    }
+    for (InventoryCheckRequest inventoryCheckRequest
+        in inventoryCheckRequests!) {
+      tempInventoryCheckCards.add(WideInventoryCheckCard(
+        inventoryCheckRequest: inventoryCheckRequest,
+      ));
+      log("added inv check request");
+    }
+
+    setState(() {
+      inventoryCheckCards = tempInventoryCheckCards;
+    });
   }
 }
