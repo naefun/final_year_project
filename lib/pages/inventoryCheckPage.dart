@@ -74,6 +74,7 @@ class _InventoryCheckPageState extends State<InventoryCheckPage> {
                       propertyImage: propertyImage,
                       landlordDetails: landlordDetails,
                       tenantDetails: tenantDetails,
+                      tenantEmail: property!=null&&property!.tenantId!=null?property!.tenantId:null,
                     ),
               SizedBox(
                 height: 30,
@@ -119,7 +120,7 @@ class _InventoryCheckPageState extends State<InventoryCheckPage> {
     log("=" * 60);
     log("Inventory check id: ${widget.inventoryCheck.id!}");
     log("Inventory check complete: ${widget.inventoryCheck.complete!}");
-    log("Inventory check completed on: ${widget.inventoryCheck.checkCompletedDate!}");
+    log("Inventory check completed on: ${widget.inventoryCheck.date!}");
     log("Inventory check clerk email: ${widget.inventoryCheck.clerkEmail!}");
     log("Inventory check property id: ${widget.inventoryCheck.propertyId!}");
     log("Inventory check type: ${widget.inventoryCheck.type!}");

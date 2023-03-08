@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
+import 'package:test_flutter_app/models/abstractInventoryCheck.dart';
 import 'package:test_flutter_app/models/inventoryCheck.dart';
 import 'package:test_flutter_app/models/inventoryCheckRequest.dart';
 import 'package:test_flutter_app/models/property.dart';
@@ -31,7 +32,8 @@ class PropertyPage extends StatefulWidget {
   _PropertyPageState createState() => _PropertyPageState();
 }
 
-class _PropertyPageState extends State<PropertyPage> with SingleTickerProviderStateMixin {
+class _PropertyPageState extends State<PropertyPage>
+    with SingleTickerProviderStateMixin {
   Property? property;
   Uint8List? propertyImage;
   User? landlordDetails;
@@ -43,6 +45,8 @@ class _PropertyPageState extends State<PropertyPage> with SingleTickerProviderSt
   List<InventoryCheck>? inventoryChecks;
   List<InventoryCheckRequest>? inventoryCheckRequests;
   List<WideInventoryCheckCard>? inventoryCheckCards;
+
+  List<AbstractInventoryCheck> allInventoryChecks = [];
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +66,8 @@ class _PropertyPageState extends State<PropertyPage> with SingleTickerProviderSt
     if (property != null && inventoryChecks == null) getInventoryChecks();
     if (property != null && inventoryCheckRequests == null)
       getInventoryCheckRequests();
+    if (inventoryChecks != null && inventoryCheckRequests != null)
+      allInventoryChecks.sort((a, b) => a.date!.compareTo(b.date!));
     if (inventoryChecks != null &&
         inventoryCheckRequests != null &&
         inventoryCheckCards == null) setInventoryCheckCards();
@@ -359,32 +365,38 @@ class _PropertyPageState extends State<PropertyPage> with SingleTickerProviderSt
 
   void getInventoryChecks() async {
     List<InventoryCheck> tempInventoryChecks = [];
+    List<AbstractInventoryCheck> tempAllInventoryChecks = allInventoryChecks;
 
     await DbService.getInventoryChecksForProperty(property!.propertyId!)
         .then((value) {
       if (value != null) {
         for (QueryDocumentSnapshot<InventoryCheck> element in value) {
+          tempAllInventoryChecks.add(element.data());
           tempInventoryChecks.add(element.data());
         }
       }
     });
 
     setState(() {
+      allInventoryChecks = tempAllInventoryChecks;
       inventoryChecks = tempInventoryChecks;
     });
   }
 
   void getInventoryCheckRequests() async {
     List<InventoryCheckRequest> tempInventoryCheckRequests = [];
+    List<AbstractInventoryCheck> tempAllInventoryChecks = allInventoryChecks;
 
     await DbService.getInventoryCheckRequestsForProperty(property!.propertyId!)
         .then((value) {
       for (QueryDocumentSnapshot<InventoryCheckRequest> element in value) {
+        tempAllInventoryChecks.add(element.data());
         tempInventoryCheckRequests.add(element.data());
       }
     });
 
     setState(() {
+      allInventoryChecks = tempAllInventoryChecks;
       inventoryCheckRequests = tempInventoryCheckRequests;
     });
   }
@@ -392,18 +404,18 @@ class _PropertyPageState extends State<PropertyPage> with SingleTickerProviderSt
   void setInventoryCheckCards() {
     List<WideInventoryCheckCard> tempInventoryCheckCards = [];
 
-    for (InventoryCheck inventoryCheck in inventoryChecks!) {
-      tempInventoryCheckCards.add(WideInventoryCheckCard(
-        inventoryCheck: inventoryCheck,
-      ));
-      log("added inv check");
-    }
-    for (InventoryCheckRequest inventoryCheckRequest
-        in inventoryCheckRequests!) {
-      tempInventoryCheckCards.add(WideInventoryCheckCard(
-        inventoryCheckRequest: inventoryCheckRequest,
-      ));
-      log("added inv check request");
+    for (AbstractInventoryCheck inventoryCheck in allInventoryChecks) {
+      if (inventoryCheck is InventoryCheck) {
+        tempInventoryCheckCards.add(WideInventoryCheckCard(
+          inventoryCheck: inventoryCheck,
+        ));
+        log("added inv check");
+      } else if (inventoryCheck is InventoryCheckRequest) {
+        tempInventoryCheckCards.add(WideInventoryCheckCard(
+          inventoryCheckRequest: inventoryCheck,
+        ));
+        log("added inv check request");
+      }
     }
 
     setState(() {

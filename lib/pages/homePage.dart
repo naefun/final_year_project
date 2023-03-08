@@ -41,42 +41,6 @@ class _HomePageState extends State<HomePage> {
         screen: const PropertiesPage());
   }
 
-  InventoryCheck newTempInvCheck = InventoryCheck(
-      id: "f2dedd50-1683-462e-b6b8-ac2943c0b962",
-      propertyId: "7a723b2c-846b-4969-8f7a-fdec218baeef",
-      complete: true,
-      type: 1,
-      clerkEmail: "n@n.co",
-      checkCompletedDate: "2023-02-21 01:32:32.418722");
-  InventoryCheckOld tempInvCheck = InventoryCheckOld(
-      comments: List.of(<String>["comment1"]),
-      clerkName: "Jason Stathum",
-      dateCompleted: "03/02/2023",
-      propertyAddress: "24 Valencia Croft, Birmingham, B35 7PH",
-      checkIn: true);
-  InventoryCheckOld tempInvCheck2 = InventoryCheckOld(
-      comments: List.of(<String>[]),
-      clerkName: "Chris Rock",
-      dateCompleted: "28/11/2022",
-      propertyAddress: "18 The Cedars, Fleet, GU51 3YL",
-      checkIn: false);
-  InventoryCheckOld tempInvCheck3 = InventoryCheckOld(
-      comments: List.of(<String>["comment1", "comment2", "comment3"]),
-      clerkName: "John Cena",
-      dateCompleted: "30/10/2022",
-      propertyAddress: "9 Broken Close, Cheshire, CH6 9HA",
-      checkIn: true);
-  InventoryCheckRequest tempInvCheckReq1 = InventoryCheckRequest(
-      type: 1,
-      clerkEmail: "clerk@clerk.com",
-      checkDate: "21/02/2023",
-      propertyId: "1e3a16d9-038e-4073-aa34-03ff6195fabe");
-  InventoryCheckRequest tempInvCheckReq2 = InventoryCheckRequest(
-      type: 2,
-      clerkEmail: "clerkyclerk@clerkyclerk.com",
-      checkDate: "21/03/2023",
-      propertyId: "1e3a16d9-038e-4073-aa34-03ff6195fabe");
-
   @override
   Widget build(BuildContext context) {
     if (inventoryChecks == null) getInventoryChecks();
@@ -89,24 +53,6 @@ class _HomePageState extends State<HomePage> {
     if (properties != null && pCards == null) {
       setPropertyCards();
     }
-
-    List<InventoryCheckCardOld> temporaryCards = [
-      InventoryCheckCardOld(
-        inventoryCheck: tempInvCheck,
-      ),
-      InventoryCheckCardOld(inventoryCheck: tempInvCheck2),
-      InventoryCheckCardOld(inventoryCheck: tempInvCheck3),
-    ];
-    List<InventoryCheckCardOld> temporaryInvCheckRequestCards = [
-      InventoryCheckCardOld(
-        inventoryCheckRequest: tempInvCheckReq1,
-      ),
-    ];
-    List<InventoryCheckCard> tempInvCheckCards = [
-      InventoryCheckCard(
-        inventoryCheck: newTempInvCheck,
-      ),
-    ];
 
     if (inventoryCheckRequests == null) {
       getInventoryCheckRequests();
@@ -239,7 +185,7 @@ class _HomePageState extends State<HomePage> {
                   for (QueryDocumentSnapshot<InventoryCheckRequest> icr
                       in value)
                     {
-                      if (icr.data().checkDate != null &&
+                      if (icr.data().date != null &&
                           icr.data().clerkEmail != null &&
                           icr.data().propertyId != null &&
                           icr.data().type != null &&

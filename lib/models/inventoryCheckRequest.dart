@@ -1,15 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:test_flutter_app/models/abstractInventoryCheck.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 
-class InventoryCheckRequest {
+class InventoryCheckRequest extends AbstractInventoryCheck{
   final String? id;
   final int? type;
   final String? clerkEmail;
-  final String? checkDate;
   final String? propertyId;
   final bool? complete;
+  @override
+  String? date;
 
-  InventoryCheckRequest({this.id, this.type, this.clerkEmail, this.checkDate, this.propertyId, this.complete});
+  InventoryCheckRequest({this.id, this.type, this.clerkEmail, this.date, this.propertyId, this.complete});
 
   factory InventoryCheckRequest.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
@@ -20,7 +22,7 @@ class InventoryCheckRequest {
       id: data?['id'],
       type: data?['type'],
       clerkEmail: data?['clerkEmail'],
-      checkDate: data?['checkDate'],
+      date: data?['checkDate'],
       propertyId: data?['propertyId'],
       complete: data?['complete'],
     );
@@ -31,7 +33,7 @@ class InventoryCheckRequest {
       if (id != null) "id": id,
       if (type != null) "type": type,
       if (clerkEmail != null) "clerkEmail": clerkEmail,
-      if (checkDate != null) "checkDate": checkDate,
+      if (date != null) "checkDate": date,
       if (propertyId != null) "propertyId": propertyId,
       if (complete != null) "complete": complete,
     };
@@ -54,8 +56,8 @@ class InventoryCheckRequest {
         inventoryCheckRequest.type != null &&
         inventoryCheckRequest.clerkEmail != null &&
         inventoryCheckRequest.clerkEmail!.isNotEmpty &&
-        inventoryCheckRequest.checkDate != null &&
-        inventoryCheckRequest.checkDate!.isNotEmpty &&
+        inventoryCheckRequest.date != null &&
+        inventoryCheckRequest.date!.isNotEmpty &&
         inventoryCheckRequest.propertyId != null &&
         inventoryCheckRequest.propertyId!.isNotEmpty &&
         inventoryCheckRequest.complete != null;

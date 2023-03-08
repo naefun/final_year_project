@@ -73,10 +73,11 @@ class _InventoryCheckCardOldState extends State<InventoryCheckCardOld> {
       commentsSize = 0;
       cardAccentColour = inventoryCheckRequestCardAccentColour;
       checkIn = widget.inventoryCheckRequest!.type == 1 ? true : false;
-      if (widget.inventoryCheckRequest!.checkDate != null &&
-          DateUtilities.validDate(widget.inventoryCheckRequest!.checkDate!)) {
-        int? dateCheck = DateUtilities.dateStringToDaysRemaining(
-            DateTime.now(), widget.inventoryCheckRequest!.checkDate!);
+      if (widget.inventoryCheckRequest!.date != null) {
+        DateTime? tempDate =
+            DateTime.tryParse(widget.inventoryCheckRequest!.date!);
+        int? dateCheck = DateUtilities.dateStringToDaysRemaining(DateTime.now(),
+            "${tempDate!.day}/${tempDate.month}/${tempDate.year}");
         daysUntilCheck = dateCheck;
         if (daysUntilCheck != null) log(daysUntilCheck.toString());
       }
@@ -97,7 +98,7 @@ class _InventoryCheckCardOldState extends State<InventoryCheckCardOld> {
           PersistentNavBarNavigator.pushNewScreen(context,
               screen: InventoryCheckRequestFormPage(
                 inventoryCheckRequest: widget.inventoryCheckRequest!,
-                tenantId: icrProperty!.tenantId,
+                tenantEmail: icrProperty!.tenantId,
                 landlordId: icrProperty!.ownerId!,
                 address: propertyAddress,
                 daysUntilInventoryCheck: daysUntilCheck,

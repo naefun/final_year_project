@@ -231,9 +231,9 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
   }
 
   void setDaysSinceCheck() {
-    if (widget.inventoryCheck.checkCompletedDate == null) return;
+    if (widget.inventoryCheck.date == null) return;
     List<String> yyyymmdd =
-        widget.inventoryCheck.checkCompletedDate!.split(" ").first.split("-");
+        widget.inventoryCheck.date!.split(" ").first.split("-");
     String ddmmyyyy = "${yyyymmdd[2]}/${yyyymmdd[1]}/${yyyymmdd[0]}";
 
     if (DateUtilities.validDate(ddmmyyyy)) {

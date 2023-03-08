@@ -189,8 +189,18 @@ class _WideInventoryCheckCardState extends State<WideInventoryCheckCard> {
   void populateInformationAsInventoryCheckRequest() async {
     Property? tempProperty;
     Color tempHighlightColor = const Color(0xFFEFA73A);
-    int? tempDaysUntilOrSinceCheck =
-        DateUtilities.getDaysUntil(widget.inventoryCheckRequest!.checkDate!);
+    int? tempDaysUntilOrSinceCheck;
+
+    DateTime? date = DateTime.tryParse(widget.inventoryCheckRequest!.date!);
+
+    if (date == null) {
+      tempDaysUntilOrSinceCheck =
+          DateUtilities.getDaysUntil(widget.inventoryCheckRequest!.date!);
+    } else {
+      tempDaysUntilOrSinceCheck =
+          DateUtilities.getDaysUntil("${date.day}/${date.month}/${date.year}");
+    }
+
     String? tempClerkName = widget.inventoryCheckRequest!.clerkEmail != null &&
             widget.inventoryCheckRequest!.clerkEmail!.isNotEmpty
         ? widget.inventoryCheckRequest!.clerkEmail!
@@ -220,8 +230,7 @@ class _WideInventoryCheckCardState extends State<WideInventoryCheckCard> {
     Color checkInCardAccentColour = const Color(0xFF579A56);
     Color checkOutCardAccentColour = const Color(0xFFE76E6E);
 
-    DateTime? date =
-        DateTime.tryParse(widget.inventoryCheck!.checkCompletedDate!);
+    DateTime? date = DateTime.tryParse(widget.inventoryCheck!.date!);
 
     int? tempDaysUntilOrSinceCheck =
         DateUtilities.getDaysUntil("${date!.day}/${date.month}/${date.year}");
@@ -230,7 +239,8 @@ class _WideInventoryCheckCardState extends State<WideInventoryCheckCard> {
         ? widget.inventoryCheck!.clerkEmail!
         : "N/A";
     int? tempCommentCount;
-    await DbService.getCommentsForInventoryCheck(widget.inventoryCheck!.id!).then(
+    await DbService.getCommentsForInventoryCheck(widget.inventoryCheck!.id!)
+        .then(
       (value) => tempCommentCount = value != null ? value.length : 0,
     );
 
@@ -247,7 +257,7 @@ class _WideInventoryCheckCardState extends State<WideInventoryCheckCard> {
       } else {
         isCheckIn = false;
       }
-      commentCount=tempCommentCount;
+      commentCount = tempCommentCount;
     });
   }
 
@@ -255,7 +265,7 @@ class _WideInventoryCheckCardState extends State<WideInventoryCheckCard> {
     PersistentNavBarNavigator.pushNewScreen(context,
         screen: InventoryCheckRequestFormPage(
           inventoryCheckRequest: widget.inventoryCheckRequest!,
-          tenantId: inventoryCheckProperty!.tenantId!,
+          tenantEmail: inventoryCheckProperty!.tenantId!,
           landlordId: inventoryCheckProperty!.ownerId!,
           address: inventoryCheckProperty!.getPropertyAddress(),
           daysUntilInventoryCheck: daysUntilOrSinceCheck,

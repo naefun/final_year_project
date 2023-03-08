@@ -79,7 +79,7 @@ class _PropertyCardState extends State<PropertyCard> {
                           children: [
                             const Icon(Icons.add_home, color: Color(0xFF636363),),
                             const SizedBox(width: 10.0),
-                            Text(inventoryCheckDueDate!=null?inventoryCheckDueDate!:"No check due"),
+                            Text(inventoryCheckDueDate!=null?inventoryCheckDueDate!.split(" ")[0].replaceAll("-", "/"):"No check due"),
                           ],
                         ),
                         const SizedBox(height: 10.0),
@@ -151,11 +151,11 @@ class _PropertyCardState extends State<PropertyCard> {
       icrs.add(element.data());
     }
 
-    icrs.sort((a, b) => a.checkDate!.compareTo(b.checkDate!));
+    icrs.sort((a, b) => a.date!.compareTo(b.date!));
 
     if(icrs.isNotEmpty){
       setState(() {
-        inventoryCheckDueDate=icrs[0].checkDate;
+        inventoryCheckDueDate=icrs[0].date;
       });
     }
   }

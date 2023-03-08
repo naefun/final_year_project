@@ -24,14 +24,14 @@ class InventoryCheckRequestFormPage extends StatefulWidget {
   InventoryCheckRequestFormPage(
       {Key? key,
       required this.inventoryCheckRequest,
-      this.tenantId,
+      this.tenantEmail,
       this.landlordId,
       this.address,
       this.daysUntilInventoryCheck,
       required this.property})
       : super(key: key);
   InventoryCheckRequest inventoryCheckRequest;
-  String? tenantId;
+  String? tenantEmail;
   String? landlordId;
   String? address;
   int? daysUntilInventoryCheck;
@@ -47,7 +47,7 @@ class _InventoryCheckRequestFormPageState
   List<InventoryCheckFormSection>? essentialInformationSections;
   List<InventoryCheckFormSection>? optionalInformationSections;
   InventoryCheckRequest? inventoryCheckRequest;
-  String? tenantId;
+  String? tenantEmail;
   String? landlordId;
   String? address;
   int? daysUntilInventoryCheck;
@@ -72,7 +72,7 @@ class _InventoryCheckRequestFormPageState
   @override
   Widget build(BuildContext context) {
     inventoryCheckRequest = widget.inventoryCheckRequest;
-    tenantId = widget.tenantId;
+    tenantEmail = widget.tenantEmail;
     landlordId = widget.landlordId;
     address = widget.address;
     daysUntilInventoryCheck = widget.daysUntilInventoryCheck;
@@ -138,6 +138,7 @@ class _InventoryCheckRequestFormPageState
                   propertyImage: propertyImage,
                   landlordDetails: landlordDetails,
                   tenantDetails: tenantDetails,
+                  tenantEmail: tenantEmail,
                 ),
                 SizedBox(height: 20),
                 Form(
@@ -377,7 +378,7 @@ class _InventoryCheckRequestFormPageState
         complete: true,
         type: inventoryCheckRequest!.type,
         clerkEmail: inventoryCheckRequest!.clerkEmail,
-        checkCompletedDate: DateTime.now().toString());
+        date: DateTime.now().toString());
 
     DbService.submitInventoryCheck(inventoryCheck);
     DbService.setInventoryCheckRequestCompleted(inventoryCheckRequest!);

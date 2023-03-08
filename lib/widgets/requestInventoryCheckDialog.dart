@@ -23,8 +23,16 @@ class _RequestInventoryCheckDialogState
   int _selectedType = 1;
   final _emailTextController = TextEditingController();
   final _dateTextController = TextEditingController();
+  late DateTime _selectedDate;
   final _focusEmail = FocusNode();
   final _focusDate = FocusNode();
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _selectedDate = DateTime.now();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -127,21 +135,32 @@ class _RequestInventoryCheckDialogState
                       const SizedBox(
                         height: 20,
                       ),
-                      TextFormField(
+                      TextField(
                         controller: _dateTextController,
-                        focusNode: _focusDate,
-                        validator: (value) => Validator.validateDate(
-                          date: value,
-                        ),
+                        onTap: () async {
+                          DateTime? selectedDate = await showDatePicker(
+                              context: context,
+                              initialDate: _selectedDate,
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime(
+                                  DateTime.now().year + 10,
+                                  DateTime.now().month < 12
+                                      ? DateTime.now().month + 1
+                                      : 0,
+                                  0));
+                          
+                          if(selectedDate!=null) {
+                            setState(() {
+                            _selectedDate=selectedDate;
+                            _dateTextController.text = "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
+                          });
+                          }
+                        },
+                        
+                        readOnly: true,
                         decoration: InputDecoration(
-                          hintText: "Inventory check date",
-                          errorBorder: UnderlineInputBorder(
-                            borderRadius: BorderRadius.circular(6.0),
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                            ),
-                          ),
-                        ),
+                            labelText: "Select inventory check date",
+                            icon: Icon(Icons.calendar_today)),
                       ),
                       const SizedBox(height: 15),
                       Row(
@@ -173,7 +192,7 @@ class _RequestInventoryCheckDialogState
                                           id: Uuid().v4(),
                                           type: _selectedType,
                                           clerkEmail: _emailTextController.text,
-                                          checkDate: _dateTextController.text,
+                                          date: _selectedDate.toString(),
                                           propertyId: propertyId,
                                           complete: false);
                                   DbService.createInventoryCheckRequestDocument(

@@ -1,13 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:test_flutter_app/models/abstractInventoryCheck.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 
-class InventoryCheck {
+
+class InventoryCheck extends AbstractInventoryCheck{
   String? id;
   String? propertyId;
   bool? complete;
   int? type;
   String? clerkEmail;
-  String? checkCompletedDate;
+  @override
+  String? date;
 
   InventoryCheck(
       {this.id,
@@ -15,7 +18,7 @@ class InventoryCheck {
       this.complete,
       this.type,
       this.clerkEmail,
-      this.checkCompletedDate});
+      this.date});
 
   factory InventoryCheck.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
@@ -28,7 +31,7 @@ class InventoryCheck {
       complete: data?['complete'],
       type: data?['type'],
       clerkEmail: data?['clerkEmail'],
-      checkCompletedDate: data?['checkCompletedDate'],
+      date: data?['checkCompletedDate'],
     );
   }
 
@@ -39,7 +42,7 @@ class InventoryCheck {
       if (complete != null) "complete": complete,
       if (type != null) "type": type,
       if (clerkEmail != null) "clerkEmail": clerkEmail,
-      if (checkCompletedDate != null) "checkCompletedDate": checkCompletedDate,
+      if (date != null) "checkCompletedDate": date,
     };
   }
 
