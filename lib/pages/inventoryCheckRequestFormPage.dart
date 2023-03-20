@@ -1,7 +1,9 @@
 import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 import 'package:test_flutter_app/models/inventoryCheck.dart';
+import 'package:test_flutter_app/models/tenancy.dart';
 import 'package:test_flutter_app/store/actions.dart' as ReduxActions;
 
 import 'package:flutter/foundation.dart';
@@ -13,6 +15,8 @@ import 'package:test_flutter_app/services/cloudStorageService.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/utilities/inventory_check_contents_builder.dart';
 import 'package:test_flutter_app/utilities/inventory_check_linked_list.dart';
+import 'package:test_flutter_app/utilities/pageNavigator.dart';
+import 'package:test_flutter_app/utilities/snackbarUtility.dart';
 import 'package:test_flutter_app/widgets/customAppBar.dart';
 import 'package:test_flutter_app/widgets/inventoryCheckFormSection.dart';
 import 'package:test_flutter_app/widgets/propertyImageAndInfo.dart';
@@ -56,6 +60,8 @@ class _InventoryCheckRequestFormPageState
   Uint8List? propertyImage;
   User? landlordDetails;
   User? tenantDetails;
+
+  List<Tenancy>? inventoryCheckRequestTenants;
 
   bool sectionsAdded = false;
   bool updateInventoryCheckLinkedList = false;
@@ -122,6 +128,8 @@ class _InventoryCheckRequestFormPageState
       });
     }
 
+    if (inventoryCheckRequestTenants == null) getInventoryCheckRequestTenants();
+
     return Scaffold(
       appBar: CustomAppBar(
         title: "Create inventory check",
@@ -138,8 +146,45 @@ class _InventoryCheckRequestFormPageState
                   propertyImage: propertyImage,
                   landlordDetails: landlordDetails,
                   tenantDetails: tenantDetails,
-                  tenantEmail: tenantEmail,
+                  propertyId: property!.propertyId!,
+                  showCurrentTenants: false,
                 ),
+                SizedBox(height: 20),
+                Text("This inventory check applies to the following tenants: "),
+                inventoryCheckRequestTenants == null ||
+                        inventoryCheckRequestTenants!.isEmpty
+                    ? Text("No tenants selected")
+                    : SizedBox(
+                        height: 40,
+                        child: ListView.builder(
+                          padding: EdgeInsets.fromLTRB(0, 5, 0, 5),
+                          scrollDirection: Axis.horizontal,
+                          shrinkWrap: true,
+                          itemCount: inventoryCheckRequestTenants!.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return GestureDetector(
+                              onTap: () {
+                                // log(currentTenancies![index].startDate!);
+                              },
+                              child: Container(
+                                margin: EdgeInsets.fromLTRB(0, 0, 10, 0),
+                                padding: EdgeInsets.all(6),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                    color: Color.fromARGB(255, 198, 227, 254),
+                                    borderRadius: BorderRadius.circular(4)),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(inventoryCheckRequestTenants![index]
+                                        .tenantEmail!),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                 SizedBox(height: 20),
                 Form(
                     child: Column(
@@ -215,14 +260,6 @@ class _InventoryCheckRequestFormPageState
                         child: Text('Cancel',
                             style: TextStyle(color: Color(0xFF489EED))),
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text("Inventory check successfully created", textAlign: TextAlign.center,),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20)
-                            ),
-                            behavior: SnackBarBehavior.floating,
-                            margin: EdgeInsets.fromLTRB(40, 0, 40, 40),
-                          ));
                           Navigator.pop(context);
                         }),
                     SizedBox(
@@ -236,7 +273,13 @@ class _InventoryCheckRequestFormPageState
                               backgroundColor: Color(0xFF489EED)),
                           child: Text('Submit',
                               style: TextStyle(color: Color(0xFFEDEDED))),
-                          onPressed: callback);
+                          onPressed: () {
+                            callback();
+                            SnackbarUtility.showSnackbar(context,
+                                "Inventory check successfully created");
+
+                            PageNavigator.navigateToHomePage(context);
+                          });
                     }),
                   ],
                 ),
@@ -378,9 +421,35 @@ class _InventoryCheckRequestFormPageState
         complete: true,
         type: inventoryCheckRequest!.type,
         clerkEmail: inventoryCheckRequest!.clerkEmail,
-        date: DateTime.now().toString());
+        date: DateTime.now().toString(),
+        tenancyIds: getTenancyIds(),
+        );
 
     DbService.submitInventoryCheck(inventoryCheck);
     DbService.setInventoryCheckRequestCompleted(inventoryCheckRequest!);
+  }
+
+  void getInventoryCheckRequestTenants() async {
+    List<Tenancy> tempTenancies = [];
+    if (widget.inventoryCheckRequest.tenancyIds != null) {
+      await DbService.getSpecificTenancyDocuments(
+              widget.inventoryCheckRequest.tenancyIds!)
+          .then((value) {
+        if (value != null) {
+          for (QueryDocumentSnapshot<Tenancy> element in value) {
+            tempTenancies.add(element.data());
+          }
+        }
+      });
+    }
+
+    setState(() {
+      inventoryCheckRequestTenants = tempTenancies;
+    });
+  }
+
+  List<String> getTenancyIds(){
+    List<String> ids = inventoryCheckRequestTenants!.map((e) => e.id!).toList();
+    return ids;
   }
 }

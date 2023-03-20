@@ -85,7 +85,8 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
                       flex: 1,
                       child: Row(
                         children: [
-                          CommenNotificationIcon(inventoryCheck: widget.inventoryCheck),
+                          CommenNotificationIcon(
+                              inventoryCheck: widget.inventoryCheck),
                           const SizedBox(
                             width: 5,
                           ),
@@ -250,9 +251,11 @@ class _InventoryCheckCardState extends State<InventoryCheckCard> {
     if (widget.inventoryCheck.clerkEmail == null) return;
     DbService.getUserDocumentFromEmail(widget.inventoryCheck.clerkEmail!)
         .then((value) {
-      setState(() {
-        clerkName = "${value!.firstName} ${value.lastName}";
-      });
+      if (value != null) {
+        setState(() {
+          clerkName = "${value.firstName} ${value.lastName}";
+        });
+      }
     });
   }
 }

@@ -6,6 +6,7 @@ import 'package:test_flutter_app/models/property.dart';
 import 'package:test_flutter_app/services/cloudStorageService.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/services/fireAuth.dart';
+import 'package:test_flutter_app/utilities/pageNavigator.dart';
 import 'package:test_flutter_app/widgets/customAppBar.dart';
 import 'package:test_flutter_app/widgets/fileSelector.dart';
 import 'package:uuid/uuid.dart';
@@ -170,15 +171,17 @@ class _CreatePropertyPageState extends State<CreatePropertyPage> {
 
                                         log("This is where the property will be sent to the database");
                                         if (Property.fieldsArentEmpty(
-                                            propertyDocument)) {
-                                          DbService.createPropertyDocument(
-                                              propertyDocument);
-                                          if (selectedImage != null) {
-                                            CloudStorageService
-                                                .putPropertyImage(
-                                                    selectedImage!,
-                                                    _propertyImageName);
-                                          }
+                                                propertyDocument) &&
+                                            selectedImage != null) {
+                                          await DbService
+                                              .createPropertyDocument(
+                                                  propertyDocument);
+                                          await CloudStorageService
+                                              .putPropertyImage(selectedImage!,
+                                                  _propertyImageName);
+
+                                          PageNavigator.navigateToHomePage(
+                                              context);
                                         }
 
                                         setState(() {

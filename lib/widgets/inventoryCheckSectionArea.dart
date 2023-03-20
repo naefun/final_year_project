@@ -3,14 +3,16 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:test_flutter_app/models/inventoryCheckInputArea.dart';
 import 'package:test_flutter_app/models/inventoryCheckSection.dart';
+import 'package:test_flutter_app/models/tenancy.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/widgets/inventoryCheckSubSectionArea.dart';
 
 class InventoryCheckSectionArea extends StatefulWidget {
-  InventoryCheckSectionArea({Key? key, required this.inventoryCheckSection})
+  InventoryCheckSectionArea({Key? key, required this.inventoryCheckSection, this.inventoryCheckTenants})
       : super(key: key);
 
   InventoryCheckSection inventoryCheckSection;
+  List<Tenancy>? inventoryCheckTenants;
 
   @override
   _InventoryCheckSectionAreaState createState() =>
@@ -78,6 +80,7 @@ class _InventoryCheckSectionAreaState extends State<InventoryCheckSectionArea> {
     for (InventoryCheckInputArea item in inventoryCheckInputAreas!) {
       tempInventoryCheckSubsectionAreas.add(InventoryCheckSubSectionArea(
         inventoryCheckInputArea: item,
+        inventoryCheckTenants: widget.inventoryCheckTenants,
       ));
     }
 

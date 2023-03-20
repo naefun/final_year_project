@@ -75,6 +75,7 @@ class _HomePageState extends State<HomePage> {
           child: SingleChildScrollView(
             physics: AlwaysScrollableScrollPhysics(),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
@@ -206,6 +207,12 @@ class _HomePageState extends State<HomePage> {
     for (InventoryCheckRequest icr in inventoryCheckRequests!) {
       icc.add(InventoryCheckCardOld(
         inventoryCheckRequest: icr,
+        onDeleted: (value) => {
+          if(value == true){
+            log("image has been deleted"),
+            clearStates(),
+          }
+        },
       ));
     }
 

@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:test_flutter_app/models/comment.dart';
+import 'package:test_flutter_app/models/tenancy.dart';
 import 'package:test_flutter_app/models/user.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/services/fireAuth.dart';
@@ -14,11 +15,13 @@ class SubsectionCommentSection extends StatefulWidget {
   SubsectionCommentSection(
       {Key? key,
       required this.inventoryCheckSubsectionId,
-      required this.inventoryCheckId})
+      required this.inventoryCheckId,
+      this.inventoryCheckTenants})
       : super(key: key);
 
   String inventoryCheckSubsectionId;
   String inventoryCheckId;
+  List<Tenancy>? inventoryCheckTenants;
 
   @override
   _SubsectionCommentSectionState createState() =>
@@ -31,6 +34,7 @@ class _SubsectionCommentSectionState extends State<SubsectionCommentSection> {
 
   final _focusCommentInput = FocusNode();
   final _controllerCommentInput = TextEditingController();
+  final _commentListViewController = ScrollController();
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +58,10 @@ class _SubsectionCommentSectionState extends State<SubsectionCommentSection> {
                       borderRadius: BorderRadius.circular(20),
                       color: Color(0xFFBBD8BA)),
                 ),
-                Text("Carlos Bento - Tenant")
+                SizedBox(
+                  width: 10,
+                ),
+                Text("Tenant")
               ],
             ),
             SizedBox(
@@ -69,7 +76,10 @@ class _SubsectionCommentSectionState extends State<SubsectionCommentSection> {
                       borderRadius: BorderRadius.circular(20),
                       color: Color(0xFFAAD0E5)),
                 ),
-                Text("John Crifton - Landlord")
+                SizedBox(
+                  width: 10,
+                ),
+                Text("Landlord")
               ],
             ),
             SizedBox(
@@ -79,11 +89,13 @@ class _SubsectionCommentSectionState extends State<SubsectionCommentSection> {
               height: 200,
               child: commentWidgets != null && commentWidgets!.isNotEmpty
                   ? ListView.builder(
+                      controller: _commentListViewController,
                       shrinkWrap: true,
                       itemCount: commentWidgets!.length,
-                      itemBuilder: (BuildContext context, int index) =>
-                          commentWidgets![index],
-                    )
+                      itemBuilder: (BuildContext context, int index) {
+                        if(index==commentWidgets!.length-1){log("last comment");}
+                        return commentWidgets![index];
+                      })
                   : SizedBox(),
             ),
             SizedBox(
@@ -93,6 +105,9 @@ class _SubsectionCommentSectionState extends State<SubsectionCommentSection> {
               children: [
                 Flexible(
                     child: TextField(
+                        onSubmitted: (val) {
+                          submitComment();
+                        },
                         controller: _controllerCommentInput,
                         focusNode: _focusCommentInput,
                         onTapOutside: (event) => _focusCommentInput.unfocus(),
@@ -117,18 +132,24 @@ class _SubsectionCommentSectionState extends State<SubsectionCommentSection> {
   void submitComment() async {
     String message = _controllerCommentInput.text;
 
+    if (message.trim().isEmpty) {
+      return;
+    }
+
     int userType = 0;
-    await getUserType().then((value) => userType=value);
+    await getUserType().then((value) => userType = value);
 
     Comment newComment = Comment(
         id: Uuid().v4(),
         userId: FireAuth.getCurrentUser()!.uid,
+        commentAuthorEmail: FireAuth.getCurrentUser()!.email,
         inventoryCheckId: widget.inventoryCheckId,
         commentContent: message,
         timestamp: DateTime.now().toString(),
         subsectionId: widget.inventoryCheckSubsectionId,
-        seenByLandlord: userType==1?true:false,
-        seenByTenant: userType==2?true:false);
+        seenByLandlord: userType == 1 ? true : false,
+        seenByTenant: userType == 2 ? true : false,
+        seenByUsers: [FireAuth.getCurrentUser()!.uid]);
 
     List<Comment> tempComments = comments!;
     tempComments.add(newComment);
@@ -193,5 +214,13 @@ class _SubsectionCommentSectionState extends State<SubsectionCommentSection> {
     });
 
     return userType;
+  }
+
+  void scrollDown() {
+    _commentListViewController.animateTo(
+      _commentListViewController.position.maxScrollExtent,
+      duration: Duration(seconds: 2),
+      curve: Curves.fastOutSlowIn,
+    );
   }
 }

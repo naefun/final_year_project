@@ -11,6 +11,7 @@ import 'package:test_flutter_app/pages/propertyPage.dart';
 import 'package:test_flutter_app/services/cloudStorageService.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/utilities/date_utilities.dart';
+import 'package:test_flutter_app/utilities/tenancyUtilities.dart';
 
 class PropertyCard extends StatefulWidget {
   PropertyCard({Key? key, this.propertyData}) : super(key: key);
@@ -24,10 +25,12 @@ class _PropertyCardState extends State<PropertyCard> {
   Uint8List? imageData;
   Property? propertyData;
   String? inventoryCheckDueDate;
+  bool? propertyIsOccupied;
 
   @override
   Widget build(BuildContext context) {
     propertyData = widget.propertyData;
+    if(propertyIsOccupied==null) checkPropertyOccupation();
     // log("created propertycard");
     log(propertyData != null
         ? "Property postcode: ${propertyData!.addressPostcode!}"
@@ -84,9 +87,7 @@ class _PropertyCardState extends State<PropertyCard> {
                         ),
                         const SizedBox(height: 10.0),
                         Card(
-                          color: propertyData != null &&
-                                  propertyData!.tenantId != null &&
-                                  propertyData!.tenantId!.isNotEmpty
+                          color: propertyIsOccupied != null && propertyIsOccupied == true
                               ? const Color(0xFF579A56)
                               : const Color(0xFFE76E6E),
                           elevation: 0,
@@ -100,9 +101,7 @@ class _PropertyCardState extends State<PropertyCard> {
                                 padding:
                                     const EdgeInsets.only(top: 2, bottom: 2),
                                 child: Text(
-                                  propertyData != null &&
-                                          propertyData!.tenantId != null &&
-                                          propertyData!.tenantId!.isNotEmpty
+                                  propertyIsOccupied != null && propertyIsOccupied == true
                                       ? "Occupied"
                                       : "Vacant",
                                   style: const TextStyle(
@@ -158,5 +157,13 @@ class _PropertyCardState extends State<PropertyCard> {
         inventoryCheckDueDate=icrs[0].date;
       });
     }
+  }
+
+  void checkPropertyOccupation() async {
+    bool occupied = false;
+    await TenancyUtilities.getCurrentTenancies(propertyData!.propertyId!).then((value) => occupied=value.isNotEmpty);
+    setState(() {
+      propertyIsOccupied = occupied;
+    });
   }
 }

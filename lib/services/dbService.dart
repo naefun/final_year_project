@@ -8,6 +8,7 @@ import 'package:test_flutter_app/models/inventoryCheckInputArea.dart';
 import 'package:test_flutter_app/models/inventoryCheckRequest.dart';
 import 'package:test_flutter_app/models/inventoryCheckSection.dart';
 import 'package:test_flutter_app/models/property.dart';
+import 'package:test_flutter_app/models/tenancy.dart';
 import 'package:test_flutter_app/models/user.dart';
 import 'package:test_flutter_app/utilities/inventory_check_contents_builder.dart';
 import 'package:uuid/uuid.dart';
@@ -89,6 +90,21 @@ class DbService {
           onError: (e) => log("Error completing: $e"),
         );
     return data?.docs;
+  }
+
+  static Future<Comment?> getComment(String commentId) async {
+    Comment? data;
+    await Comment.getDocumentReference()
+        .where("id", isEqualTo: commentId)
+        .get()
+        .then(
+          (res) => {
+            log("Successfully retrieved comments"),
+            data = res.docs.first.data()
+          },
+          onError: (e) => log("Error completing: $e"),
+        );
+    return data;
   }
 
   static Future<int> getNumberOfInventoryCheckComments(
@@ -370,5 +386,83 @@ class DbService {
       "addressPostcode": property.addressPostcode,
       "tenantId": property.tenantId,
     });
+  }
+
+  static Future<void> deleteProperty(String propertyId) async {
+    await Property.getDocumentReference().doc(propertyId).delete();
+  }
+
+  static Future<void> deleteInventoryCheckRequest(
+      String inventoryCheckRequestId) async {
+    await InventoryCheckRequest.getDocumentReference()
+        .doc(inventoryCheckRequestId)
+        .delete();
+  }
+
+  static Future<void> createTenancyDocument(Tenancy tenancy) async {
+    await Tenancy.getDocumentReference().doc(tenancy.id).set(tenancy);
+  }
+
+  static Future<List<QueryDocumentSnapshot<Tenancy>>?> getTenancyDocuments(
+      String propertyId) async {
+    QuerySnapshot<Tenancy>? data;
+    await Tenancy.getDocumentReference()
+        .where("propertyId", isEqualTo: propertyId)
+        .get()
+        .then((value) => data = value);
+    return data != null ? data!.docs : null;
+  }
+
+  static Future<List<QueryDocumentSnapshot<Tenancy>>?>
+      getSpecificTenancyDocuments(List<String> tenancyIds) async {
+    QuerySnapshot<Tenancy>? data;
+    await Tenancy.getDocumentReference()
+        .where("id", whereIn: tenancyIds)
+        .get()
+        .then((value) => data = value);
+    return data != null ? data!.docs : null;
+  }
+
+  static Future<void> updateTenancyTerm(
+      String tenancyId, String? start, String? end) async {
+    Tenancy? tenancyToUpdate;
+    Tenancy.getDocumentReference()
+        .where("id", isEqualTo: tenancyId)
+        .get()
+        .then((value) {
+      tenancyToUpdate = value.docs.first.data();
+    });
+    final ref = db.collection("tenancies").doc(tenancyId);
+    await ref.update({
+      "startDate": start != null ? start : tenancyToUpdate!.startDate,
+      "endDate": end != null ? end : tenancyToUpdate!.endDate
+    });
+    log("Updated tenancy date/s");
+  }
+
+  static Future<void> updateCommentSeenBy(String uid, String commentId) async {
+    String commentDocumentId = "";
+    Comment? c;
+    List<String> seenByUsers = [];
+
+    await getComment(commentId).then((value) => {
+          if (value != null) {c = value}
+        });
+
+    if (c == null) return;
+    if (c!.seenByUsers != null) seenByUsers = c!.seenByUsers!;
+    seenByUsers.add(uid);
+
+    await db
+        .collection("comments")
+        .where("id", isEqualTo: commentId)
+        .get()
+        .then((value) {
+      commentDocumentId = value.docs.first.id;
+    });
+    await db
+        .collection("comments")
+        .doc(commentDocumentId)
+        .update({"seenByUsers": seenByUsers});
   }
 }

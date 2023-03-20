@@ -1,10 +1,12 @@
 import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:test_flutter_app/models/inventoryCheck.dart';
 import 'package:test_flutter_app/models/inventoryCheckSection.dart';
 import 'package:test_flutter_app/models/property.dart';
+import 'package:test_flutter_app/models/tenancy.dart';
 import 'package:test_flutter_app/models/user.dart';
 import 'package:test_flutter_app/services/cloudStorageService.dart';
 import 'package:test_flutter_app/services/dbService.dart';
@@ -33,6 +35,7 @@ class _InventoryCheckPageState extends State<InventoryCheckPage> {
   User? landlordDetails;
   User? tenantDetails;
   bool canRenderPropertyImageAndInfo = false;
+  List<Tenancy>? inventoryCheckTenants;
 
   @override
   Widget build(BuildContext context) {
@@ -44,15 +47,19 @@ class _InventoryCheckPageState extends State<InventoryCheckPage> {
     if (property != null && propertyAddress == null) setPropertyAddress();
     if (property != null && propertyImage == null) getPropertyImage();
     if (property != null && landlordDetails == null) getLandlordDetails();
-    if (property != null && property!.tenantId!=null && tenantDetails == null) getTenantDetails();
+    if (property != null && property!.tenantId != null && tenantDetails == null)
+      getTenantDetails();
+    if (inventoryCheckTenants == null) getInventoryCheckTenants();
     allowPropertyImageAndInfoToRender();
 
     if (essentialInventoryCheckSections != null &&
         essentialInventoryCheckSections!.isNotEmpty &&
+        inventoryCheckTenants!=null &&
         essentialInventoryCheckSectionAreas == null)
       createEssentialInventoryCheckSectionAreas();
     if (optionalInventoryCheckSections != null &&
         optionalInventoryCheckSections!.isNotEmpty &&
+        inventoryCheckTenants!=null &&
         optionalInventoryCheckSectionAreas == null)
       createOptionalInventoryCheckSectionAreas();
 
@@ -74,11 +81,50 @@ class _InventoryCheckPageState extends State<InventoryCheckPage> {
                       propertyImage: propertyImage,
                       landlordDetails: landlordDetails,
                       tenantDetails: tenantDetails,
-                      tenantEmail: property!=null&&property!.tenantId!=null?property!.tenantId:null,
+                      tenantEmail:
+                          property != null && property!.tenantId != null
+                              ? property!.tenantId
+                              : null,
+                      propertyId: property!.propertyId!,
+                      showCurrentTenants: false,
                     ),
               SizedBox(
                 height: 30,
               ),
+              Text("This inventory check applies to the following tenants: "),
+              inventoryCheckTenants == null || inventoryCheckTenants!.isEmpty
+                  ? Text("No tenants selected")
+                  : SizedBox(
+                      height: 40,
+                      child: ListView.builder(
+                        padding: EdgeInsets.fromLTRB(0, 5, 0, 5),
+                        scrollDirection: Axis.horizontal,
+                        shrinkWrap: true,
+                        itemCount: inventoryCheckTenants!.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          return GestureDetector(
+                            onTap: () {
+                              // log(currentTenancies![index].startDate!);
+                            },
+                            child: Container(
+                              margin: EdgeInsets.fromLTRB(0, 0, 10, 0),
+                              padding: EdgeInsets.all(6),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                  color: Color.fromARGB(255, 198, 227, 254),
+                                  borderRadius: BorderRadius.circular(4)),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(inventoryCheckTenants![index]
+                                      .tenantEmail!),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
               Text("Essential information"),
               SizedBox(height: 20),
               essentialInventoryCheckSectionAreas != null &&
@@ -233,7 +279,7 @@ class _InventoryCheckPageState extends State<InventoryCheckPage> {
         tenantDetails = tempTenantDetails;
       });
     }
-          log("Set tenant details");
+    log("Set tenant details");
   }
 
   void getProperty() async {
@@ -281,6 +327,7 @@ class _InventoryCheckPageState extends State<InventoryCheckPage> {
     for (InventoryCheckSection item in essentialInventoryCheckSections!) {
       inventoryCheckSectionAreas.add(InventoryCheckSectionArea(
         inventoryCheckSection: item,
+        inventoryCheckTenants: inventoryCheckTenants,
       ));
     }
 
@@ -295,11 +342,31 @@ class _InventoryCheckPageState extends State<InventoryCheckPage> {
     for (InventoryCheckSection item in optionalInventoryCheckSections!) {
       inventoryCheckSectionAreas.add(InventoryCheckSectionArea(
         inventoryCheckSection: item,
+        inventoryCheckTenants: inventoryCheckTenants,
       ));
     }
 
     setState(() {
       optionalInventoryCheckSectionAreas = inventoryCheckSectionAreas;
+    });
+  }
+
+  void getInventoryCheckTenants() async {
+    List<Tenancy> tempTenancies = [];
+    if (widget.inventoryCheck.tenancyIds != null) {
+      await DbService.getSpecificTenancyDocuments(
+              widget.inventoryCheck.tenancyIds!)
+          .then((value) {
+        if (value != null) {
+          for (QueryDocumentSnapshot<Tenancy> element in value) {
+            tempTenancies.add(element.data());
+          }
+        }
+      });
+    }
+
+    setState(() {
+      inventoryCheckTenants = tempTenancies;
     });
   }
 }

@@ -10,18 +10,22 @@ import 'package:test_flutter_app/models/inventoryCheckRequest.dart';
 import 'package:test_flutter_app/models/property.dart';
 import 'package:test_flutter_app/models/user.dart';
 import 'package:test_flutter_app/pages/editPropertyPage.dart';
+import 'package:test_flutter_app/pages/editTenancyPage.dart';
+import 'package:test_flutter_app/pages/homePage.dart';
+import 'package:test_flutter_app/pages/loginPage.dart';
 import 'package:test_flutter_app/services/cloudStorageService.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/utilities/global_values.dart';
 import 'package:test_flutter_app/utilities/themeColors.dart';
 import 'package:test_flutter_app/widgets/customAppBar.dart';
+import 'package:test_flutter_app/widgets/deletePropertyDialog.dart';
 import 'package:test_flutter_app/widgets/inventoryCheckHelp.dart';
 import 'package:test_flutter_app/widgets/propertyImageAndInfo.dart';
 import 'package:test_flutter_app/widgets/requestInventoryCheckDialog.dart';
 import 'package:test_flutter_app/widgets/simpleButton.dart';
 import 'package:test_flutter_app/widgets/wideInventoryCheckCard.dart';
 
-enum MenuItem { edit, itemTwo, itemThree }
+enum MenuItem { editProperty, viewTenancies, delete }
 
 class PropertyPage extends StatefulWidget {
   PropertyPage({Key? key, this.property}) : super(key: key);
@@ -34,6 +38,8 @@ class PropertyPage extends StatefulWidget {
 
 class _PropertyPageState extends State<PropertyPage>
     with SingleTickerProviderStateMixin {
+  bool deletedProperty = false;
+
   Property? property;
   Uint8List? propertyImage;
   User? landlordDetails;
@@ -46,7 +52,7 @@ class _PropertyPageState extends State<PropertyPage>
   List<InventoryCheckRequest>? inventoryCheckRequests;
   List<WideInventoryCheckCard>? inventoryCheckCards;
 
-  List<AbstractInventoryCheck> allInventoryChecks = [];
+  List<AbstractInventoryCheck>? allInventoryChecks;
 
   @override
   Widget build(BuildContext context) {
@@ -64,13 +70,11 @@ class _PropertyPageState extends State<PropertyPage>
     }
 
     if (property != null && inventoryChecks == null) getInventoryChecks();
-    if (property != null && inventoryCheckRequests == null)
-      getInventoryCheckRequests();
-    if (inventoryChecks != null && inventoryCheckRequests != null)
-      allInventoryChecks.sort((a, b) => a.date!.compareTo(b.date!));
+    if (property != null && inventoryCheckRequests == null) getInventoryCheckRequests();
     if (inventoryChecks != null &&
         inventoryCheckRequests != null &&
-        inventoryCheckCards == null) setInventoryCheckCards();
+        allInventoryChecks == null) setAllInventoryChecks();
+    if (allInventoryChecks != null && inventoryCheckCards == null) setInventoryCheckCards();
 
     return Scaffold(
       appBar: CustomAppBar(),
@@ -82,17 +86,32 @@ class _PropertyPageState extends State<PropertyPage>
               Row(mainAxisAlignment: MainAxisAlignment.end, children: [
                 PopupMenuButton<MenuItem>(
                   padding: const EdgeInsets.all(0),
-                  initialValue: selectedMenu,
                   // Callback that sets the selected popup menu item.
                   onSelected: (MenuItem item) {
                     switch (item) {
-                      case MenuItem.edit:
+                      case MenuItem.editProperty:
                         log("edit selected");
                         if (property != null && propertyImage != null) {
                           PersistentNavBarNavigator.pushNewScreen(context,
                               screen: EditPropertyPage(
                                   property: property!,
                                   propertyImage: propertyImage!));
+                        }
+                        break;
+                      case MenuItem.viewTenancies:
+                        PersistentNavBarNavigator.pushNewScreen(context,
+                            screen: EditTenancyPage(
+                              property: widget.property!,
+                            ));
+                        break;
+                      case MenuItem.delete:
+                        if (property != null) {
+                          showDialog<String>(
+                              context: context,
+                              builder: (BuildContext context) =>
+                                  DeletePropertyDialog(
+                                    property: property!,
+                                  ));
                         }
                         break;
                       default:
@@ -104,16 +123,19 @@ class _PropertyPageState extends State<PropertyPage>
                   itemBuilder: (BuildContext context) =>
                       <PopupMenuEntry<MenuItem>>[
                     const PopupMenuItem<MenuItem>(
-                      value: MenuItem.edit,
-                      child: Text('Edit'),
+                      value: MenuItem.editProperty,
+                      child: Text('Edit property'),
                     ),
                     const PopupMenuItem<MenuItem>(
-                      value: MenuItem.itemTwo,
-                      child: Text('Move tenant in'),
+                      value: MenuItem.viewTenancies,
+                      child: Text('View tenancies'),
                     ),
                     const PopupMenuItem<MenuItem>(
-                      value: MenuItem.itemThree,
-                      child: Text('Item 3'),
+                      value: MenuItem.delete,
+                      child: Text(
+                        'Delete property',
+                        style: TextStyle(color: ThemeColors.mainRed),
+                      ),
                     ),
                   ],
                 )
@@ -127,6 +149,7 @@ class _PropertyPageState extends State<PropertyPage>
                         widget.property!.tenantId!.isNotEmpty
                     ? widget.property!.tenantId!
                     : null,
+                propertyId: widget.property!.propertyId!,
               ),
               const SizedBox(height: 50.0),
               Flex(
@@ -147,7 +170,7 @@ class _PropertyPageState extends State<PropertyPage>
                           context: context,
                           builder: (BuildContext context) =>
                               RequestInventoryCheckDialog(
-                                property: property,
+                                property: property!
                               )),
                       icon: Icon(Icons.add),
                       label: Text("Request"),
@@ -365,46 +388,51 @@ class _PropertyPageState extends State<PropertyPage>
 
   void getInventoryChecks() async {
     List<InventoryCheck> tempInventoryChecks = [];
-    List<AbstractInventoryCheck> tempAllInventoryChecks = allInventoryChecks;
 
     await DbService.getInventoryChecksForProperty(property!.propertyId!)
         .then((value) {
       if (value != null) {
         for (QueryDocumentSnapshot<InventoryCheck> element in value) {
-          tempAllInventoryChecks.add(element.data());
           tempInventoryChecks.add(element.data());
         }
       }
     });
 
     setState(() {
-      allInventoryChecks = tempAllInventoryChecks;
       inventoryChecks = tempInventoryChecks;
     });
   }
 
   void getInventoryCheckRequests() async {
     List<InventoryCheckRequest> tempInventoryCheckRequests = [];
-    List<AbstractInventoryCheck> tempAllInventoryChecks = allInventoryChecks;
 
     await DbService.getInventoryCheckRequestsForProperty(property!.propertyId!)
         .then((value) {
       for (QueryDocumentSnapshot<InventoryCheckRequest> element in value) {
-        tempAllInventoryChecks.add(element.data());
         tempInventoryCheckRequests.add(element.data());
       }
     });
 
     setState(() {
-      allInventoryChecks = tempAllInventoryChecks;
       inventoryCheckRequests = tempInventoryCheckRequests;
+    });
+  }
+
+  void setAllInventoryChecks() {
+    List<AbstractInventoryCheck> tempAllInventoryChecks = [];
+    tempAllInventoryChecks.addAll(inventoryCheckRequests!);
+    tempAllInventoryChecks.addAll(inventoryChecks!);
+    tempAllInventoryChecks.sort((a, b) => a.date!.compareTo(b.date!));
+
+    setState(() {
+      allInventoryChecks = tempAllInventoryChecks;
     });
   }
 
   void setInventoryCheckCards() {
     List<WideInventoryCheckCard> tempInventoryCheckCards = [];
 
-    for (AbstractInventoryCheck inventoryCheck in allInventoryChecks) {
+    for (AbstractInventoryCheck inventoryCheck in allInventoryChecks!) {
       if (inventoryCheck is InventoryCheck) {
         tempInventoryCheckCards.add(WideInventoryCheckCard(
           inventoryCheck: inventoryCheck,

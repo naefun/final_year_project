@@ -2,16 +2,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:test_flutter_app/models/comment.dart';
 import 'package:test_flutter_app/models/inventoryCheckInputArea.dart';
+import 'package:test_flutter_app/models/tenancy.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/services/fireAuth.dart';
 import 'package:test_flutter_app/widgets/subsectionCommentSection.dart';
 
 class InventoryCheckSubSectionArea extends StatefulWidget {
   InventoryCheckSubSectionArea(
-      {Key? key, required this.inventoryCheckInputArea})
+      {Key? key, required this.inventoryCheckInputArea, this.inventoryCheckTenants})
       : super(key: key);
 
   InventoryCheckInputArea inventoryCheckInputArea;
+  List<Tenancy>? inventoryCheckTenants;
 
   @override
   _InventoryCheckSubSectionAreaState createState() =>
@@ -92,6 +94,7 @@ class _InventoryCheckSubSectionAreaState
                       widget.inventoryCheckInputArea.id!,
                   inventoryCheckId:
                       widget.inventoryCheckInputArea.inventoryCheckId!,
+                  inventoryCheckTenants: widget.inventoryCheckTenants,
                 ),
         ]),
       ),
@@ -133,19 +136,12 @@ class _InventoryCheckSubSectionAreaState
   }
 
   void setNewCommentsAvailable() async {
-    int? userType;
     bool tempNewCommentsAvailable = false;
 
-    await DbService.getUserDocument(FireAuth.getCurrentUser()!.uid)
-        .then((value) => userType = value?.userType);
-
-    if (userType != null) {
-      for (Comment element in subsectionComments!) {
-        if ((userType == 1 && element.seenByLandlord == false) ||
-            (userType == 2 && element.seenByTenant == false)) {
-          tempNewCommentsAvailable = true;
-          break;
-        }
+    for (Comment element in subsectionComments!) {
+      if (element.seenByUsers!=null && !element.seenByUsers!.contains(FireAuth.getCurrentUser()!.uid)) {
+        tempNewCommentsAvailable = true;
+        break;
       }
     }
 

@@ -8,10 +8,11 @@ class InventoryCheckRequest extends AbstractInventoryCheck{
   final String? clerkEmail;
   final String? propertyId;
   final bool? complete;
+  final List<String>? tenancyIds;
   @override
   String? date;
 
-  InventoryCheckRequest({this.id, this.type, this.clerkEmail, this.date, this.propertyId, this.complete});
+  InventoryCheckRequest({this.id, this.type, this.clerkEmail, this.date, this.propertyId, this.complete, this.tenancyIds});
 
   factory InventoryCheckRequest.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
@@ -25,6 +26,7 @@ class InventoryCheckRequest extends AbstractInventoryCheck{
       date: data?['checkDate'],
       propertyId: data?['propertyId'],
       complete: data?['complete'],
+      tenancyIds: data?['tenancyIds']==null?null:data!['tenancyIds'].cast<String>(),
     );
   }
 
@@ -36,6 +38,7 @@ class InventoryCheckRequest extends AbstractInventoryCheck{
       if (date != null) "checkDate": date,
       if (propertyId != null) "propertyId": propertyId,
       if (complete != null) "complete": complete,
+      if (tenancyIds != null) "tenancyIds": tenancyIds,
     };
   }
 

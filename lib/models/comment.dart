@@ -10,6 +10,8 @@ class Comment {
   final String? subsectionId;
   final bool? seenByTenant;
   final bool? seenByLandlord;
+  final String? commentAuthorEmail;
+  final List<String>? seenByUsers;
 
   Comment(
       {this.id,
@@ -19,7 +21,10 @@ class Comment {
       this.timestamp,
       this.subsectionId,
       this.seenByTenant,
-      this.seenByLandlord});
+      this.seenByLandlord,
+      this.commentAuthorEmail,
+      this.seenByUsers
+      });
 
   factory Comment.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
@@ -35,6 +40,8 @@ class Comment {
       subsectionId: data?['subsectionId'],
       seenByTenant: data?['seenByTenant'],
       seenByLandlord: data?['seenByLandlord'],
+      commentAuthorEmail: data?['commentAuthorEmail'],
+      seenByUsers: data?['seenByUsers']!=null?data!['seenByUsers'].cast<String>():null
     );
   }
 
@@ -48,6 +55,8 @@ class Comment {
       if (subsectionId != null) "subsectionId": subsectionId,
       if (seenByTenant != null) "seenByTenant": seenByTenant,
       if (seenByLandlord != null) "seenByLandlord": seenByLandlord,
+      if (commentAuthorEmail != null) "commentAuthorEmail": commentAuthorEmail,
+      if (seenByUsers != null) "seenByUsers": seenByUsers,
     };
   }
 

@@ -25,12 +25,10 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
   final _propertyRoadNameTextController = TextEditingController();
   final _propertyCityTextController = TextEditingController();
   final _propertyPostcodeTextController = TextEditingController();
-  final _propertyTenantTextController = TextEditingController();
   final _propertyNumberFocus = FocusNode();
   final _propertyRoadNameFocus = FocusNode();
   final _propertyCityFocus = FocusNode();
   final _propertyPostcodeFocus = FocusNode();
-  final _propertyTenantFocus = FocusNode();
 
   @override
   Widget build(BuildContext context) {
@@ -113,20 +111,6 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
                         ),
                       ),
                     ),
-                    TextFormField(
-                      focusNode: _propertyTenantFocus,
-                      onTapOutside: (event) => _propertyTenantFocus.unfocus(),
-                      controller: _propertyTenantTextController,
-                      decoration: InputDecoration(
-                        hintText: "Tenant email",
-                        errorBorder: UnderlineInputBorder(
-                          borderRadius: BorderRadius.circular(6.0),
-                          borderSide: BorderSide(
-                            color: Colors.red,
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -157,8 +141,7 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
                                 _propertyRoadNameTextController.text,
                             addressCity: _propertyCityTextController.text,
                             addressPostcode:
-                                _propertyPostcodeTextController.text,
-                            tenantId: _propertyTenantTextController.text));
+                                _propertyPostcodeTextController.text));
                       },
                       buttonLabel: "Submit"),
                 ],
@@ -179,7 +162,5 @@ class _EditPropertyPageState extends State<EditPropertyPage> {
     _propertyRoadNameTextController.text = widget.property.addressRoadName!;
     _propertyCityTextController.text = widget.property.addressCity!;
     _propertyPostcodeTextController.text = widget.property.addressPostcode!;
-    _propertyTenantTextController.text =
-        widget.property.tenantId != null ? widget.property.tenantId! : "";
   }
 }
