@@ -5,8 +5,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:test_flutter_app/models/tenancy.dart';
 import 'package:test_flutter_app/services/dbService.dart';
+import 'package:test_flutter_app/services/fireAuth.dart';
 import 'package:test_flutter_app/utilities/global_values.dart';
 import 'package:test_flutter_app/utilities/tenancyUtilities.dart';
+import 'package:test_flutter_app/utilities/user_utilities.dart';
 
 import '../models/user.dart';
 
@@ -37,10 +39,11 @@ class _PropertyImageAndInfoState extends State<PropertyImageAndInfo> {
   Uint8List? propertyImage;
   User? landlordDetails;
   User? tenantDetails;
+  User? currentUser;
   String? propertyAddress;
   String? propertyId;
-  List<Tenancy>? currentTenancies;
-  bool showCurrentTenants = true;
+  List<Tenancy>? tenancies;
+  bool showTenancyInformation = true;
 
   @override
   Widget build(BuildContext context) {
@@ -51,11 +54,21 @@ class _PropertyImageAndInfoState extends State<PropertyImageAndInfo> {
     propertyId = widget.propertyId;
     if (widget.showCurrentTenants != null) {
       setState(() {
-        showCurrentTenants = widget.showCurrentTenants!;
+        showTenancyInformation = widget.showCurrentTenants!;
+      });
+    }
+    if (currentUser == null) {
+      UserUtilities.getUserDocument(FireAuth.getCurrentUser()!.uid)
+          .then((value) {
+        if (value != null) {
+          setState(() {
+            currentUser = value;
+          });
+        }
       });
     }
 
-    if (currentTenancies == null && propertyId != null) setCurrentTenancies();
+    if (tenancies == null && propertyId != null) setTenancies();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,14 +98,14 @@ class _PropertyImageAndInfoState extends State<PropertyImageAndInfo> {
               children: [
                 Image(
                   image: AssetImage(IconPaths.tenantIconPath.path),
-                  color: currentTenancies == null || currentTenancies!.isEmpty
+                  color: tenancies == null || tenancies!.isEmpty
                       ? Color(0xFFE76E6E)
                       : Color(0xFF579A56),
                   width: 28,
                   height: 28,
                 ),
                 const SizedBox(width: 8.0),
-                Text(currentTenancies == null || currentTenancies!.isEmpty
+                Text(tenancies == null || tenancies!.isEmpty
                     ? "Vacant property"
                     : "Occupied")
               ],
@@ -132,51 +145,116 @@ class _PropertyImageAndInfoState extends State<PropertyImageAndInfo> {
           ],
         ),
         SizedBox(height: 20),
-        currentTenancies != null &&
-                currentTenancies!.isNotEmpty &&
-                showCurrentTenants == true
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(currentTenancies!.length > 1
-                      ? "Current tenants"
-                      : "Current tenant"),
-                  SizedBox(
-                    height: 40,
-                    child: ListView.builder(
-                        padding: EdgeInsets.fromLTRB(0, 5, 0, 5),
-                        scrollDirection: Axis.horizontal,
-                        shrinkWrap: true,
-                        itemCount: currentTenancies!.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return GestureDetector(
-                              onTap: () {
-                                // log(currentTenancies![index].startDate!);
-                              },
-                              child: Container(
-                                margin: EdgeInsets.fromLTRB(0, 0, 10, 0),
-                                padding: EdgeInsets.all(6),
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                    color: Color.fromARGB(255, 199, 199, 199),
-                                    borderRadius: BorderRadius.circular(4)),
-                                child:
-                                    Text(currentTenancies![index].tenantEmail!),
-                              ));
-                        }),
-                  ),
-                ],
-              )
-            : SizedBox(),
+        renderCurrentTenants(),
+        renderCurrentUserTenancyDates()
       ],
     );
+  }
+
+  void setTenancies() {
+    if (currentUser == null) return;
+
+    switch (currentUser!.userType!) {
+      case 1:
+        setCurrentTenancies();
+        break;
+      case 2:
+        setTenantTenancies();
+        break;
+    }
   }
 
   void setCurrentTenancies() async {
     List<Tenancy> tempTenancies =
         await TenancyUtilities.getCurrentTenancies(propertyId!);
     setState(() {
-      currentTenancies = tempTenancies;
+      tenancies = tempTenancies;
     });
+  }
+
+  void setTenantTenancies() async {
+    List<Tenancy> tempTenancies = await TenancyUtilities.getTenantTenancies(
+        propertyId!, FireAuth.getCurrentUser()!.email!);
+    setState(() {
+      tenancies = tempTenancies;
+    });
+  }
+
+  Widget renderCurrentTenants() {
+    return tenancies != null &&
+            tenancies!.isNotEmpty &&
+            showTenancyInformation == true &&
+            currentUser != null &&
+            currentUser!.userType! == 1
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                  tenancies!.length > 1 ? "Current tenants" : "Current tenant"),
+              SizedBox(
+                height: 40,
+                child: ListView.builder(
+                    padding: EdgeInsets.fromLTRB(0, 5, 0, 5),
+                    scrollDirection: Axis.horizontal,
+                    shrinkWrap: true,
+                    itemCount: tenancies!.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return GestureDetector(
+                          onTap: () {
+                            // log(currentTenancies![index].startDate!);
+                          },
+                          child: Container(
+                            margin: EdgeInsets.fromLTRB(0, 0, 10, 0),
+                            padding: EdgeInsets.all(6),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                                color: Color.fromARGB(255, 199, 199, 199),
+                                borderRadius: BorderRadius.circular(4)),
+                            child: Text(tenancies![index].tenantEmail!),
+                          ));
+                    }),
+              ),
+            ],
+          )
+        : SizedBox();
+  }
+
+  Widget renderCurrentUserTenancyDates() {
+    return tenancies != null &&
+            tenancies!.isNotEmpty &&
+            showTenancyInformation &&
+            currentUser != null &&
+            currentUser!.userType! == 2
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                  "${tenancies!.length > 1 ? "Your tenancies" : "Your tenancy"} for this property"),
+              SizedBox(
+                height: 40,
+                child: ListView.builder(
+                    padding: EdgeInsets.fromLTRB(0, 5, 0, 5),
+                    scrollDirection: Axis.horizontal,
+                    shrinkWrap: true,
+                    itemCount: tenancies!.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return GestureDetector(
+                          onTap: () {
+                            // log(currentTenancies![index].startDate!);
+                          },
+                          child: Container(
+                            margin: EdgeInsets.fromLTRB(0, 0, 10, 0),
+                            padding: EdgeInsets.all(6),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                                color: Color.fromARGB(255, 199, 199, 199),
+                                borderRadius: BorderRadius.circular(4)),
+                            child: Text(tenancies![index].getFormatedStartAndEndDates()),
+                          ));
+                    }),
+              ),
+            ],
+          )
+        : SizedBox();
   }
 }

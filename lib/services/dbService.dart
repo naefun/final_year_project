@@ -10,6 +10,7 @@ import 'package:test_flutter_app/models/inventoryCheckSection.dart';
 import 'package:test_flutter_app/models/property.dart';
 import 'package:test_flutter_app/models/tenancy.dart';
 import 'package:test_flutter_app/models/user.dart';
+import 'package:test_flutter_app/services/fireAuth.dart';
 import 'package:test_flutter_app/utilities/inventory_check_contents_builder.dart';
 import 'package:uuid/uuid.dart';
 
@@ -171,6 +172,39 @@ class DbService {
           onError: (e) => log("Error completing: $e"),
         );
     return data?.docs;
+  }
+
+  static Future<List<QueryDocumentSnapshot<Property>>?>
+      getPropertiesForTenant() async {
+    log("getting propeties for tenant");
+
+    String tenantEmail = FireAuth.getCurrentUser()!.email!;
+
+    List<String> propertyIds = [];
+    QuerySnapshot<Property>? properties;
+    log(tenantEmail);
+    await Tenancy.getDocumentReference()
+        .where("tenantEmail", isEqualTo: tenantEmail)
+        .get()
+        .then(
+      (res) {
+        for (QueryDocumentSnapshot<Tenancy> element in res.docs) {
+          propertyIds.add(element.data().propertyId!);
+        }
+      },
+      onError: (e) => log("Error completing: $e"),
+    );
+
+    log(propertyIds.length.toString());
+
+    await Property.getDocumentReference()
+        .where("propertyId", whereIn: propertyIds)
+        .get()
+        .then(
+          (res) => properties = res,
+          onError: (e) => log("Error completing: $e"),
+        );
+    return properties?.docs;
   }
 
   static Future<List<QueryDocumentSnapshot<InventoryCheck>>?>
@@ -408,6 +442,17 @@ class DbService {
     QuerySnapshot<Tenancy>? data;
     await Tenancy.getDocumentReference()
         .where("propertyId", isEqualTo: propertyId)
+        .get()
+        .then((value) => data = value);
+    return data != null ? data!.docs : null;
+  }
+
+  static Future<List<QueryDocumentSnapshot<Tenancy>>?>
+      getTenantsTenancyDocuments(String propertyId, String tenantEmail) async {
+    QuerySnapshot<Tenancy>? data;
+    await Tenancy.getDocumentReference()
+        .where("propertyId", isEqualTo: propertyId)
+        .where("tenantEmail", isEqualTo: tenantEmail)
         .get()
         .then((value) => data = value);
     return data != null ? data!.docs : null;

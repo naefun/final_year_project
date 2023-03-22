@@ -1,9 +1,11 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:test_flutter_app/models/tenancy.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 
 class TenancyUtilities {
-    static Future<List<Tenancy>> getCurrentTenancies(String propertyId) async {
+  static Future<List<Tenancy>> getCurrentTenancies(String propertyId) async {
     List<Tenancy> tempCurrentTenancies = [];
     await DbService.getTenancyDocuments(propertyId).then((value) {
       if (value != null) {
@@ -24,5 +26,24 @@ class TenancyUtilities {
       tempCurrentTenancies.sort((a, b) => a.startDate!.compareTo(b.startDate!));
     }
     return tempCurrentTenancies;
+  }
+
+  static Future<List<Tenancy>> getTenantTenancies(
+      String propertyId, String tenantEmail) async {
+    List<Tenancy> tempTenancies = [];
+    await DbService.getTenantsTenancyDocuments(propertyId, tenantEmail)
+        .then((value) {
+      if (value != null) {
+        log("tenant tenancy length: ${value.length}");
+        for (QueryDocumentSnapshot<Tenancy> element in value) {
+          tempTenancies.add(element.data());
+        }
+      }
+    });
+
+    if (tempTenancies.isNotEmpty) {
+      tempTenancies.sort((a, b) => a.startDate!.compareTo(b.startDate!));
+    }
+    return tempTenancies;
   }
 }

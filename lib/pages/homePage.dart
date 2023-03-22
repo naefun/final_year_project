@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:test_flutter_app/models/inventoryCheck.dart';
 import 'package:test_flutter_app/models/property.dart';
+import 'package:test_flutter_app/models/user.dart';
 import 'package:test_flutter_app/store/actions.dart' as ReduxActions;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import 'package:test_flutter_app/models/inventoryCheckRequest.dart';
 import 'package:test_flutter_app/pages/propertiesPage.dart';
 import 'package:test_flutter_app/services/dbService.dart';
 import 'package:test_flutter_app/services/fireAuth.dart';
+import 'package:test_flutter_app/utilities/user_utilities.dart';
 import 'package:test_flutter_app/widgets/customAppBar.dart';
 import 'package:test_flutter_app/widgets/inventoryCheckCard.dart';
 import 'package:test_flutter_app/widgets/inventoryCheckCardOld.dart';
@@ -34,6 +36,8 @@ class _HomePageState extends State<HomePage> {
   bool reloadData = false;
   PropertyCards? pCards;
 
+  User? currentUserInfo;
+
   void navigateToPropertiesPage() {
     log("Navigating to properties page");
 
@@ -43,6 +47,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (currentUserInfo == null) getUserInfo();
     if (inventoryChecks == null) getInventoryChecks();
     if (inventoryChecks != null &&
         inventoryChecks!.isNotEmpty &&
@@ -63,7 +68,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     return Scaffold(
-      appBar: CustomAppBar(),
+      appBar: CustomAppBar(title: "${currentUserInfo!=null&&currentUserInfo!.userType==2?"Tenant":currentUserInfo!=null&&currentUserInfo!.userType==1?"Landlord":""} dashboard"),
       body: RefreshIndicator(
         onRefresh: () async {
           // Replace this delay with the code to be executed during refresh
@@ -208,10 +213,11 @@ class _HomePageState extends State<HomePage> {
       icc.add(InventoryCheckCardOld(
         inventoryCheckRequest: icr,
         onDeleted: (value) => {
-          if(value == true){
-            log("image has been deleted"),
-            clearStates(),
-          }
+          if (value == true)
+            {
+              log("image has been deleted"),
+              clearStates(),
+            }
         },
       ));
     }
@@ -277,7 +283,19 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void getProperties() async {
+  void getProperties() {
+    if (currentUserInfo == null) {
+      return;
+    }
+
+    if (currentUserInfo!.userType == 1) {
+      getPropertiesForLandlord();
+    } else if (currentUserInfo!.userType == 2) {
+      getPropertiesForTenant();
+    }
+  }
+
+  void getPropertiesForLandlord() async {
     List<Property> tempProperties = [];
     List<QueryDocumentSnapshot<Property>> propertyQueryDocuments = [];
 
@@ -291,5 +309,32 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       properties = tempProperties;
     });
+  }
+
+  void getPropertiesForTenant() async {
+    List<Property> tempProperties = [];
+    await DbService.getPropertiesForTenant().then((value) {
+      if (value != null) {
+        for (QueryDocumentSnapshot<Property> element in value) {
+          tempProperties.add(element.data());
+        }
+      }
+    });
+    setState(() {
+      properties = tempProperties;
+    });
+  }
+
+  void getUserInfo() async {
+    User? tempCurrentUser;
+    await UserUtilities.getUserDocument(FireAuth.getCurrentUser()!.uid)
+        .then((value) {
+      if (value != null) {
+        tempCurrentUser = value;
+        log(value.userType.toString());
+      }
+    });
+
+    currentUserInfo = tempCurrentUser;
   }
 }

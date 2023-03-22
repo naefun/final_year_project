@@ -8,6 +8,7 @@ import 'package:test_flutter_app/models/abstractInventoryCheck.dart';
 import 'package:test_flutter_app/models/inventoryCheck.dart';
 import 'package:test_flutter_app/models/inventoryCheckRequest.dart';
 import 'package:test_flutter_app/models/property.dart';
+import 'package:test_flutter_app/models/tenancy.dart';
 import 'package:test_flutter_app/models/user.dart';
 import 'package:test_flutter_app/pages/editPropertyPage.dart';
 import 'package:test_flutter_app/pages/editTenancyPage.dart';
@@ -15,8 +16,10 @@ import 'package:test_flutter_app/pages/homePage.dart';
 import 'package:test_flutter_app/pages/loginPage.dart';
 import 'package:test_flutter_app/services/cloudStorageService.dart';
 import 'package:test_flutter_app/services/dbService.dart';
+import 'package:test_flutter_app/services/fireAuth.dart';
 import 'package:test_flutter_app/utilities/global_values.dart';
 import 'package:test_flutter_app/utilities/themeColors.dart';
+import 'package:test_flutter_app/utilities/user_utilities.dart';
 import 'package:test_flutter_app/widgets/customAppBar.dart';
 import 'package:test_flutter_app/widgets/deletePropertyDialog.dart';
 import 'package:test_flutter_app/widgets/inventoryCheckHelp.dart';
@@ -47,6 +50,7 @@ class _PropertyPageState extends State<PropertyPage>
 
   MenuItem? selectedMenu;
   String? dropdownValue;
+  User? currentUser;
 
   List<InventoryCheck>? inventoryChecks;
   List<InventoryCheckRequest>? inventoryCheckRequests;
@@ -57,6 +61,7 @@ class _PropertyPageState extends State<PropertyPage>
   @override
   Widget build(BuildContext context) {
     widget.property != null ? property = widget.property! : null;
+    if (currentUser == null) getCurrentUser();
 
     if (property != null &&
         property!.propertyImageName != null &&
@@ -69,12 +74,16 @@ class _PropertyPageState extends State<PropertyPage>
       getLandlordDetails(property!.ownerId!);
     }
 
-    if (property != null && inventoryChecks == null) getInventoryChecks();
-    if (property != null && inventoryCheckRequests == null) getInventoryCheckRequests();
+    if (property != null && currentUser != null && inventoryChecks == null)
+      getInventoryChecks();
+    if (property != null &&
+        currentUser != null &&
+        inventoryCheckRequests == null) getInventoryCheckRequests();
     if (inventoryChecks != null &&
         inventoryCheckRequests != null &&
         allInventoryChecks == null) setAllInventoryChecks();
-    if (allInventoryChecks != null && inventoryCheckCards == null) setInventoryCheckCards();
+    if (allInventoryChecks != null && inventoryCheckCards == null)
+      setInventoryCheckCards();
 
     return Scaffold(
       appBar: CustomAppBar(),
@@ -83,7 +92,7 @@ class _PropertyPageState extends State<PropertyPage>
           child: SingleChildScrollView(
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+              currentUser!=null&&currentUser!.userType==1?Row(mainAxisAlignment: MainAxisAlignment.end, children: [
                 PopupMenuButton<MenuItem>(
                   padding: const EdgeInsets.all(0),
                   // Callback that sets the selected popup menu item.
@@ -139,7 +148,7 @@ class _PropertyPageState extends State<PropertyPage>
                     ),
                   ],
                 )
-              ]),
+              ]):SizedBox(),
               PropertyImageAndInfo(
                 propertyImage: propertyImage,
                 landlordDetails: landlordDetails,
@@ -165,18 +174,19 @@ class _PropertyPageState extends State<PropertyPage>
                       InventoryCheckHelp()
                     ],
                   ),
-                  ElevatedButton.icon(
-                      onPressed: () => showDialog<String>(
-                          context: context,
-                          builder: (BuildContext context) =>
-                              RequestInventoryCheckDialog(
-                                property: property!
-                              )),
-                      icon: Icon(Icons.add),
-                      label: Text("Request"),
-                      style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap))
+                  currentUser != null && currentUser!.userType == 1
+                      ? ElevatedButton.icon(
+                          onPressed: () => showDialog<String>(
+                              context: context,
+                              builder: (BuildContext context) =>
+                                  RequestInventoryCheckDialog(
+                                      property: property!)),
+                          icon: Icon(Icons.add),
+                          label: Text("Request"),
+                          style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap))
+                      : SizedBox()
                 ],
               ),
               const SizedBox(height: 15.0),
@@ -419,6 +429,63 @@ class _PropertyPageState extends State<PropertyPage>
   }
 
   void setAllInventoryChecks() {
+    if (currentUser!.userType == 1) {
+      setAllInventoryChecksForLandlord();
+    } else if (currentUser!.userType == 2) {
+      setAllInventoryChecksForTenant();
+    }
+  }
+
+  void setAllInventoryChecksForTenant() async {
+    List<AbstractInventoryCheck> tempAllInventoryChecks = [];
+    List<InventoryCheckRequest> tempInventoryCheckRequests = [];
+    List<InventoryCheck> tempInventoryChecks = [];
+    tempInventoryCheckRequests.addAll(inventoryCheckRequests!);
+    tempInventoryChecks.addAll(inventoryChecks!);
+
+    log("current user is tenant");
+    List<String> currentUsersTenancies = [];
+    await DbService.getTenantsTenancyDocuments(
+            property!.propertyId!, FireAuth.getCurrentUser()!.email!)
+        .then((value) {
+      if (value != null) {
+        log("not null");
+        for (QueryDocumentSnapshot<Tenancy> element in value) {
+          currentUsersTenancies.add(element.data().id!);
+        }
+      }
+    });
+
+    for (InventoryCheck element in tempInventoryChecks) {
+      if (element.tenancyIds == null) {
+        continue;
+      }
+      for (String id in element.tenancyIds!) {
+        if (currentUsersTenancies.contains(id)) {
+          tempAllInventoryChecks.add(element);
+        }
+      }
+    }
+
+    for (InventoryCheckRequest element in tempInventoryCheckRequests) {
+      if (element.tenancyIds == null) {
+        continue;
+      }
+      for (String id in element.tenancyIds!) {
+        if (currentUsersTenancies.contains(id)) {
+          tempAllInventoryChecks.add(element);
+        }
+      }
+    }
+
+    tempAllInventoryChecks.sort((a, b) => a.date!.compareTo(b.date!));
+
+    setState(() {
+      allInventoryChecks = tempAllInventoryChecks;
+    });
+  }
+
+  void setAllInventoryChecksForLandlord() {
     List<AbstractInventoryCheck> tempAllInventoryChecks = [];
     tempAllInventoryChecks.addAll(inventoryCheckRequests!);
     tempAllInventoryChecks.addAll(inventoryChecks!);
@@ -448,6 +515,15 @@ class _PropertyPageState extends State<PropertyPage>
 
     setState(() {
       inventoryCheckCards = tempInventoryCheckCards;
+    });
+  }
+
+  void getCurrentUser() async {
+    User? tempUser;
+    await UserUtilities.getUserDocument(FireAuth.getCurrentUser()!.uid)
+        .then((value) => tempUser = value);
+    setState(() {
+      currentUser = tempUser;
     });
   }
 }
